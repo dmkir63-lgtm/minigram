@@ -278,15 +278,6 @@
 
   <div class="toast hidden" id="toast"></div>
 
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script>
-    window.ME = {
-      id: {{ user.id }},
-    username: { { user.username | tojson } },
-    display_name: { { user.display_name | tojson } }
-    };
-  </script>
-  <script src="{{ url_for('static', filename='chat.js') }}"></script>
   <button class="about-fab" type="button" onclick="openAboutModal()">About</button>
 
   <div class="about-overlay hidden" id="about-modal" onclick="closeAboutModal()">
@@ -398,9 +389,12 @@ SMTP_PORT=587
 
 Если `SMTP_USER` и `SMTP_PASS` пустые, код подтверждения будет выводиться в консоль Docker.</pre>
       </div>
-
     </div>
-  </div> ```
+
+  </div>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script> window.ME = { id: {{ user.id }}, username: { { user.username | tojson } }, display_name: { { user.display_name | tojson } } }; </script>
+  <script src="{{ url_for('static', filename='chat.js') }}"></script>
 </body>
 
-</html>
+</html> ```
