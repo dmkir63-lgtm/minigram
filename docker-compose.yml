@@ -3,7 +3,7 @@ services:
     build: .
     container_name: minigram_app
     ports:
-      - "5000:5000"
+      - "${PUBLIC_PORT:-5000}:${APP_PORT:-5000}"
     env_file:
       - .env
     volumes:

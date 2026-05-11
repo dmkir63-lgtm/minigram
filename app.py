@@ -1986,4 +1986,8 @@ if __name__ == "__main__":
         )
     if not SMTP_USER or not SMTP_PASS:
         print("SMTP не задан: коды подтверждения будут печататься в консоль.")
-    socketio.run(app, debug=True, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)
+    host = os.environ.get("APP_HOST", "0.0.0.0")
+    port = int(os.environ.get("APP_PORT", "5000"))
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+
+    socketio.run(app, host=host, port=port, debug=debug, allow_unsafe_werkzeug=True)
