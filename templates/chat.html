@@ -274,7 +274,12 @@
   <script>
     window.ME = JSON.parse(document.getElementById('me-data').textContent);
   </script>
-  <script src="{{ url_for('static', filename='chat.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/01_core.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/02_menu_profile.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/03_chats_messages.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/04_search_create_join.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/05_settings_requests.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/06_socket_init.js') }}"></script>
 </body>
 
 </html>
