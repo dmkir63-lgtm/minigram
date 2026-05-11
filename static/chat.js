@@ -1202,27 +1202,27 @@ function setupSocket() {
 
   socket.on('connect', () => {
     loadSidebar().catch(error => showToast(error.message));
-    loadFriendRequests().catch(() => {});
+    loadFriendRequests().catch(() => { });
   });
 
   socket.on('online_update', () => {
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
   });
 
   socket.on('friend_request_in', data => {
     showToast(`Новая заявка от ${data.display_name || '@' + data.username}`);
-    loadFriendRequests().catch(() => {});
+    loadFriendRequests().catch(() => { });
   });
 
   socket.on('friend_accepted', data => {
     showToast(`${data.display_name || '@' + data.username} принял заявку`);
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
   });
 
   socket.on('channel_join_request', data => {
     showToast(`Новая заявка в ${data.channel_name} от ${data.display_name || '@' + data.username}`);
     if (activeChat && activeChat.type === 'channel' && activeChat.id === data.channel_id) {
-      loadChannelJoinRequests().catch(() => {});
+      loadChannelJoinRequests().catch(() => { });
     }
   });
 
@@ -1230,12 +1230,12 @@ function setupSocket() {
     showToast(`Заявка в ${data.channel_name} одобрена`);
     loadSidebar().then(() => {
       if (data.channel) openChannelChat(data.channel);
-    }).catch(() => {});
+    }).catch(() => { });
   });
 
   socket.on('channel_join_declined', data => {
     showToast(`Заявка в ${data.channel_name} отклонена`);
-    doSearch().catch(() => {});
+    doSearch().catch(() => { });
   });
 
   socket.on('new_private_message', message => {
@@ -1248,19 +1248,19 @@ function setupSocket() {
     } else if (message.sender_id !== window.ME.id) {
       showToast(`Новое сообщение от ${message.display_name || '@' + message.username}`);
     }
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
   });
 
   socket.on('private_messages_status', data => {
     updateMessageStatuses(data.message_ids || [], data.status);
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
   });
 
   socket.on('new_channel_message', message => {
     if (activeChat && activeChat.type === 'channel' && activeChat.id === message.channel_id) {
       appendMessage(message);
     }
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
   });
 
   socket.on('channel_deleted', data => {
@@ -1269,28 +1269,28 @@ function setupSocket() {
       closeModal('channel-settings-modal');
       closeChat();
     }
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
   });
 
   socket.on('private_chat_deleted', data => {
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
     if (activeChat && activeChat.type === 'private' && activeChat.id === data.peer_id) {
       dom.messages.innerHTML = emptyList('Чат удалён, история очищена');
-      refreshPrivateStatus().catch(() => {});
+      refreshPrivateStatus().catch(() => { });
     }
   });
 
   socket.on('relationship_changed', data => {
-    loadSidebar().catch(() => {});
+    loadSidebar().catch(() => { });
     if (activeChat && activeChat.type === 'private' && activeChat.id === data.user_id) {
-      refreshPrivateStatus().catch(() => {});
+      refreshPrivateStatus().catch(() => { });
     }
   });
 
   socket.on('app_error', data => {
     showToast(data.error || 'Ошибка');
     if (activeChat && activeChat.type === 'private') {
-      refreshPrivateStatus().catch(() => {});
+      refreshPrivateStatus().catch(() => { });
     }
   });
 }
@@ -1317,5 +1317,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (invite) {
     document.getElementById('join-invite-input').value = invite;
     document.getElementById('join-channel-modal').classList.remove('hidden');
+  }
+});
+
+function openAboutModal() {
+  const modal = document.getElementById('about-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAboutModal() {
+  const modal = document.getElementById('about-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape') {
+    closeAboutModal();
   }
 });
