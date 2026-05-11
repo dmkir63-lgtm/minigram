@@ -7,7 +7,7 @@
 ### 1. Склонировать проект
 
 ```bash
-git clone <repo_url>
+git clone <https://github.com/jaruccky/minigram.git>
 cd minigram
 ```
 
@@ -56,31 +56,8 @@ mkdir -p data
 sudo docker-compose up --build
 ```
 
-Запуск в фоне:
-
-```bash
-sudo docker-compose up --build -d
-```
-
-Остановить:
-
-```bash
-sudo docker-compose down
-```
-
-Посмотреть логи:
-
-```bash
-sudo docker-compose logs -f
-```
-
 ### 5. Открыть сайт
 
-Локально:
-
-```text
-http://localhost:5000
-```
 
 На сервере:
 
