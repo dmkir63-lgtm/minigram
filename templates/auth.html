@@ -211,11 +211,28 @@
     .back-link:hover {
       color: var(--accent)
     }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color .2s;
+    }
+
+    .home-link:hover {
+      color: var(--accent);
+    }
+
   </style>
 </head>
 
 <body>
   <div class="wrap">
+    <a class="home-link" href="{{ url_for('index') }}">← На главную</a>
     <div class="logo">
       <span class="logo-icon">✈️</span>
       <h1>MiniGram</h1>
@@ -284,6 +301,11 @@
 
   <script>
     let pendingEmail = '';
+    const redirectTarget = {{ (next_url or '/') | tojson }};
+
+    function goAfterAuth() {
+      location.href = redirectTarget || '/';
+    }
 
     function switchTab(tab) {
       ['login', 'register', 'verify'].forEach(t => {
@@ -304,7 +326,7 @@
       if (!login || !password) return setMsg('Заполните все поля');
       const r = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ login, password }) });
       const d = await r.json();
-      if (d.ok) { setMsg('Входим…', true); location.href = '/'; }
+      if (d.ok) { setMsg('Входим…', true); goAfterAuth(); }
       else setMsg(d.error);
     }
 
@@ -334,7 +356,7 @@
       if (code.length !== 6) return setMsg('Введите 6-значный код');
       const r = await fetch('/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: pendingEmail, code }) });
       const d = await r.json();
-      if (d.ok) { setMsg('Аккаунт создан! Входим…', true); setTimeout(() => location.href = '/', 800); }
+      if (d.ok) { setMsg('Аккаунт создан! Входим…', true); setTimeout(goAfterAuth, 800); }
       else setMsg(d.error);
     }
 
@@ -345,6 +367,9 @@
       else if (active.id === 'panel-register') doRegister();
       else if (active.id === 'panel-verify') doVerify();
     });
+
+    const defaultTab = {{ (default_tab or 'login') | tojson }};
+    switchTab(defaultTab === 'register' ? 'register' : 'login');
   </script>
 </body>
 
