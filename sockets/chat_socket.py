@@ -1,4 +1,4 @@
-from flask import session
+from flask import request, session
 from flask_socketio import emit, join_room
 
 from core import *
@@ -6,7 +6,7 @@ from extensions import socketio
 
 
 @socketio.on("connect")
-def socket_connect():
+def socket_connect(auth=None):
     if "user_id" not in session:
         return False
     uid = session["user_id"]
