@@ -294,8 +294,7 @@
         <a class="about-repo" href="https://github.com/jaruccky/minigram" target="_blank" rel="noopener noreferrer">
           Открыть репозиторий GitHub
         </a>
-
-        <pre class="about-text"># MiniGram
+        <textarea class="about-text" readonly># MiniGram
 
 Учебный веб-мессенджер на Flask, Socket.IO и SQLite/SQLCipher.
 
@@ -304,7 +303,7 @@
 ### 1. Склонировать проект
 
 ```bash
-git clone <https://github.com/jaruccky/minigram.git>
+git clone https://github.com/jaruccky/minigram.git
 cd minigram
 ```
 
@@ -355,7 +354,6 @@ sudo docker-compose up --build
 
 ### 5. Открыть сайт
 
-
 На сервере:
 
 ```text
@@ -387,14 +385,20 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 ```
 
-Если `SMTP_USER` и `SMTP_PASS` пустые, код подтверждения будет выводиться в консоль Docker.</pre>
+Если `SMTP_USER` и `SMTP_PASS` пустые, код подтверждения будет выводиться в консоль Docker.</textarea>
       </div>
     </div>
-
   </div>
+
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script> window.ME = { id: {{ user.id }}, username: { { user.username | tojson } }, display_name: { { user.display_name | tojson } } }; </script>
+  <script>
+    window.ME = {
+      id: {{ user.id }},
+    username: { { user.username | tojson } },
+    display_name: { { user.display_name | tojson } }
+    };
+  </script>
   <script src="{{ url_for('static', filename='chat.js') }}"></script>
 </body>
 
-</html> ```
+</html>
