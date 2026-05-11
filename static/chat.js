@@ -1320,18 +1320,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function openAboutModal() {
-  const modal = document.getElementById('about-modal');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function closeAboutModal() {
-  const modal = document.getElementById('about-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-document.addEventListener('keydown', function (event) {
-  if (event.key === 'Escape') {
-    closeAboutModal();
-  }
-});
