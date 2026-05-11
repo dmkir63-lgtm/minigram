@@ -1,0 +1,11 @@
+services:
+  minigram:
+    build: .
+    container_name: minigram_app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

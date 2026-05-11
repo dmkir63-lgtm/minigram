@@ -1,0 +1,37 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# databases
+*.db
+*.sqlite
+*.sqlite3
+data/
+instance/
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# virtual environments
+venv/
+.venv/
+env/
+
+# flask
+.flaskenv
+*.log
+
+# docker/local
+docker-compose.override.yml
+
+# os/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

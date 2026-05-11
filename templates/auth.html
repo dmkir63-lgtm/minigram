@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniGram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #17212b;
+      --card: #1e2c3a;
+      --input: #242f3d;
+      --border: #2b5278;
+      --accent: #2ea6ff;
+      --accent-hover: #3db3ff;
+      --text: #fff;
+      --text2: #a0acb8;
+      --error: #f87171;
+      --success: #4ade80;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 400px;
+      padding: 16px
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 28px
+    }
+
+    .logo-icon {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 8px
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 600
+    }
+
+    .logo p {
+      font-size: 14px;
+      color: var(--text2);
+      margin-top: 4px
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .4)
+    }
+
+    .tabs {
+      display: flex;
+      background: var(--input);
+      border-radius: 8px;
+      padding: 3px;
+      margin-bottom: 24px;
+      gap: 3px
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text2);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff
+    }
+
+    .form-group {
+      margin-bottom: 14px
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 6px
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 13px;
+      background: var(--input);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s
+    }
+
+    input:focus {
+      border-color: var(--border)
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 4px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s
+    }
+
+    .btn:hover {
+      background: var(--accent-hover)
+    }
+
+    .btn:active {
+      transform: scale(.98)
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: default
+    }
+
+    #msg {
+      text-align: center;
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 18px;
+      color: var(--error)
+    }
+
+    #msg.ok {
+      color: var(--success)
+    }
+
+    .panel {
+      display: none
+    }
+
+    .panel.active {
+      display: block
+    }
+
+    /* verify step */
+    .verify-hint {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 16px;
+      text-align: center;
+      line-height: 1.5
+    }
+
+    .verify-hint b {
+      color: var(--text)
+    }
+
+    .code-input {
+      text-align: center;
+      font-size: 22px;
+      letter-spacing: 8px;
+      font-weight: 600
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--text2);
+      cursor: pointer
+    }
+
+    .back-link:hover {
+      color: var(--accent)
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="logo">
+      <span class="logo-icon">✈️</span>
+      <h1>MiniGram</h1>
+      <p>Мессенджер реального времени</p>
+    </div>
+
+    <div class="card">
+
+      <!-- Login panel -->
+      <div id="panel-login" class="panel active">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('login')">Войти</button>
+          <button class="tab" onclick="switchTab('register')">Регистрация</button>
+        </div>
+        <div class="form-group">
+          <label>Email или @тег</label>
+          <input type="text" id="l-login" placeholder="you@example.com или @ivan" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn" onclick="doLogin()">Войти</button>
+      </div>
+
+      <!-- Register panel -->
+      <div id="panel-register" class="panel">
+        <div class="tabs">
+          <button class="tab" onclick="switchTab('login')">Войти</button>
+          <button class="tab active" onclick="switchTab('register')">Регистрация</button>
+        </div>
+        <div class="form-group">
+          <label>Ник</label>
+          <input type="text" id="r-display-name" placeholder="Иван Петров" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label>Тег / логин</label>
+          <input type="text" id="r-username" placeholder="ivan_petrov" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="r-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <input type="password" id="r-pass" placeholder="минимум 6 символов" autocomplete="new-password">
+        </div>
+        <button class="btn" id="reg-btn" onclick="doRegister()">Продолжить</button>
+      </div>
+
+      <!-- Verify panel -->
+      <div id="panel-verify" class="panel">
+        <p class="verify-hint">Мы отправили 6-значный код на<br><b id="verify-email-label"></b></p>
+        <div class="form-group">
+          <label>Код подтверждения</label>
+          <input type="text" id="v-code" class="code-input" placeholder="000000" maxlength="6" inputmode="numeric"
+            autocomplete="one-time-code">
+        </div>
+        <button class="btn" onclick="doVerify()">Подтвердить</button>
+        <span class="back-link" onclick="switchTab('register')">← Изменить данные</span>
+      </div>
+
+      <div id="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    let pendingEmail = '';
+
+    function switchTab(tab) {
+      ['login', 'register', 'verify'].forEach(t => {
+        document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+      });
+      setMsg('');
+    }
+
+    function setMsg(text, ok = false) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = ok ? 'ok' : '';
+    }
+
+    async function doLogin() {
+      const login = document.getElementById('l-login').value.trim();
+      const password = document.getElementById('l-pass').value.trim();
+      if (!login || !password) return setMsg('Заполните все поля');
+      const r = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ login, password }) });
+      const d = await r.json();
+      if (d.ok) { setMsg('Входим…', true); location.href = '/'; }
+      else setMsg(d.error);
+    }
+
+    async function doRegister() {
+      const display_name = document.getElementById('r-display-name').value.trim();
+      const username = document.getElementById('r-username').value.trim().replace(/^@/, '');
+      const email = document.getElementById('r-email').value.trim();
+      const password = document.getElementById('r-pass').value.trim();
+      if (!display_name || !username || !email || !password) return setMsg('Заполните все поля');
+      const btn = document.getElementById('reg-btn');
+      btn.disabled = true;
+      btn.textContent = 'Отправляем…';
+      const r = await fetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, display_name, email, password }) });
+      const d = await r.json();
+      btn.disabled = false;
+      btn.textContent = 'Продолжить';
+      if (d.ok) {
+        pendingEmail = email;
+        document.getElementById('verify-email-label').textContent = email;
+        switchTab('verify');
+        setMsg('Код отправлен! Проверьте почту', true);
+      } else setMsg(d.error);
+    }
+
+    async function doVerify() {
+      const code = document.getElementById('v-code').value.trim();
+      if (code.length !== 6) return setMsg('Введите 6-значный код');
+      const r = await fetch('/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: pendingEmail, code }) });
+      const d = await r.json();
+      if (d.ok) { setMsg('Аккаунт создан! Входим…', true); setTimeout(() => location.href = '/', 800); }
+      else setMsg(d.error);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const active = document.querySelector('.panel.active');
+      if (active.id === 'panel-login') doLogin();
+      else if (active.id === 'panel-register') doRegister();
+      else if (active.id === 'panel-verify') doVerify();
+    });
+  </script>
+</body>
+
+</html>

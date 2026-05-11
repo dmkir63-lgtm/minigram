@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniGram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <button class="menu-btn" type="button" onclick="toggleMenu()">☰</button>
+        <div class="search-bar">
+          <input id="search-input" type="text" placeholder="Поиск по нику, @тегу или каналу" autocomplete="off" oninput="onSearchInput()">
+        </div>
+      </div>
+
+      <div id="search-dropdown" class="search-dropdown hidden"></div>
+      <div id="chat-list" class="chat-list"></div>
+    </aside>
+
+    <main class="chat-main">
+      <section class="no-chat" id="no-chat">
+        <div class="no-chat-icon">✈️</div>
+        <div class="no-chat-title">MiniGram</div>
+        <div class="no-chat-sub">Выберите чат, найдите друга или создайте канал</div>
+      </section>
+
+      <section class="chat-view hidden" id="chat-view">
+        <header class="chat-header">
+          <button class="back-btn" type="button" onclick="closeChat()">←</button>
+          <div class="chat-header-avatar" id="chat-header-avatar">?</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name" id="chat-header-name">—</div>
+            <div class="chat-header-sub" id="chat-header-sub"></div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="icon-btn hidden" type="button" id="add-friend-btn" onclick="addActiveFriend()" title="Добавить в друзья">➕</button>
+            <button class="icon-btn hidden" type="button" id="remove-friend-btn" onclick="removeActiveFriend()" title="Убрать из друзей">➖</button>
+            <button class="icon-btn hidden" type="button" id="block-user-btn" onclick="toggleActiveBlock()" title="Заблокировать">🚫</button>
+            <button class="icon-btn hidden" type="button" id="delete-chat-btn" onclick="deleteActivePrivateChat()" title="Удалить чат и историю">🗑️</button>
+            <button class="icon-btn hidden" type="button" id="join-requests-btn" onclick="openJoinRequestsModal()" title="Заявки на вступление">📥</button>
+            <button class="icon-btn hidden" type="button" id="settings-btn" onclick="openChannelSettingsModal()" title="Настройки канала">⚙️</button>
+            <button class="icon-btn hidden" type="button" id="leave-channel-btn" onclick="leaveChannel()" title="Убрать из своих каналов">🚪</button>
+            <button class="icon-btn hidden" type="button" id="invite-btn" onclick="showInvite()" title="Инвайт-ссылка">🔗</button>
+          </div>
+        </header>
+
+        <div class="messages" id="messages"></div>
+        <div class="typing-row" id="typing-row"></div>
+
+        <div class="input-row">
+          <input id="msg-input" type="text" placeholder="Сообщение…" autocomplete="off">
+          <button class="send-btn" id="send-btn" type="button" onclick="sendMessage()" aria-label="Отправить">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay hidden" id="menu-overlay" onclick="closeMenu()">
+    <div class="menu-panel" onclick="event.stopPropagation()">
+      <div class="menu-profile">
+        <div class="menu-avatar">{{ user.display_name[0].upper() }}</div>
+        <div>
+          <div class="menu-username">{{ user.display_name }}</div>
+          <div class="menu-email">@{{ user.username }} · {{ user.email }}</div>
+        </div>
+      </div>
+      <div class="menu-items">
+        <button class="menu-item" type="button" onclick="openCreateChannel()">➕ Создать канал</button>
+        <button class="menu-item" type="button" onclick="openJoinChannel()">🔗 Войти по инвайту</button>
+        <button class="menu-item" type="button" onclick="openFriendRequests()">👥 Заявки в друзья <span id="req-badge" class="badge hidden">0</span></button>
+        <button class="menu-item" type="button" onclick="openBlockedUsers()">🚫 Заблокированные</button>
+        <button class="menu-item" type="button" onclick="openProfileSettings()">⚙️ Настройки профиля</button>
+        <button class="menu-item danger" type="button" onclick="location.href='/logout'">↩ Выйти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="create-channel-modal" onclick="closeModal('create-channel-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Создать канал</span>
+        <button class="modal-close" type="button" onclick="closeModal('create-channel-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="ch-name">Название / ник канала</label>
+          <input id="ch-name" type="text" placeholder="Например: Новости группы">
+        </div>
+        <div class="form-group">
+          <label for="ch-username">Тег канала</label>
+          <div class="tag-input-row">
+            <span>@</span>
+            <input id="ch-username" type="text" placeholder="group_news">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="ch-desc">Описание</label>
+          <input id="ch-desc" type="text" placeholder="О чём этот канал">
+        </div>
+        <label class="checkbox-row">
+          <input id="ch-private" type="checkbox">
+          <span>Закрытый канал: вступление только после одобрения</span>
+        </label>
+        <button class="btn-primary" type="button" onclick="doCreateChannel()">Создать</button>
+        <div id="create-ch-msg" class="modal-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="join-channel-modal" onclick="closeModal('join-channel-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Войти по инвайту</span>
+        <button class="modal-close" type="button" onclick="closeModal('join-channel-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="join-invite-input">Инвайт-код или ссылка</label>
+          <input id="join-invite-input" type="text" placeholder="Например: AbC123xYz">
+        </div>
+        <button class="btn-primary" type="button" onclick="doJoinChannel()">Войти</button>
+        <div id="join-ch-msg" class="modal-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="invite-modal" onclick="closeModal('invite-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Инвайт-ссылка</span>
+        <button class="modal-close" type="button" onclick="closeModal('invite-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Поделитесь этой ссылкой, чтобы пригласить человека в канал:</p>
+        <div class="invite-box" id="invite-box"></div>
+        <button class="btn-primary" type="button" onclick="copyInvite()">Скопировать</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="channel-settings-modal" onclick="closeModal('channel-settings-modal')">
+    <div class="modal modal-wide modal-channel-settings" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Настройки канала</span>
+        <button class="modal-close" type="button" onclick="closeModal('channel-settings-modal')">✕</button>
+      </div>
+      <div class="modal-body modal-body-scroll">
+        <div class="admin-block">
+          <div class="admin-title">Название канала</div>
+          <div class="form-group">
+            <label for="settings-channel-name">Название / ник канала</label>
+            <input id="settings-channel-name" type="text" placeholder="Например: Новости группы">
+          </div>
+        </div>
+
+        <div class="admin-block">
+          <div class="admin-title">Режим канала</div>
+          <label class="checkbox-row">
+            <input id="settings-channel-private" type="checkbox">
+            <span>Закрытый канал: вступление только после одобрения</span>
+          </label>
+          <button class="btn-primary" type="button" onclick="saveChannelSettings()">Сохранить настройки канала</button>
+        </div>
+
+        <div class="admin-block">
+          <div class="admin-title">Текущие админы</div>
+          <div id="admins-list" class="admin-list-box compact"></div>
+        </div>
+        <div class="admin-block">
+          <div class="admin-title">Добавить админа</div>
+          <p class="hint">Назначать админов можно только из участников канала. Админы могут публиковать посты и принимать заявки.</p>
+          <div class="form-group admin-search-group">
+            <label for="admin-search-input">Поиск подписчика</label>
+            <input id="admin-search-input" type="text" placeholder="Введите ник или @тег" autocomplete="off" oninput="onAdminSearchInput()">
+          </div>
+          <div id="admin-candidates-list" class="admin-list-box candidates"></div>
+        </div>
+        <div class="admin-block danger-zone">
+          <div class="admin-title">Опасная зона</div>
+          <p class="hint">Удаление канала полностью стирает канал, участников, заявки и все посты канала из базы данных.</p>
+          <button class="btn-danger-wide" type="button" onclick="deleteActiveChannel()">Удалить канал</button>
+        </div>
+        <div id="admins-msg" class="modal-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="join-requests-modal" onclick="closeModal('join-requests-modal')">
+    <div class="modal modal-wide" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Заявки на вступление</span>
+        <button class="modal-close" type="button" onclick="closeModal('join-requests-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Для закрытого канала новые участники появляются здесь. Владелец и админы могут принять или отклонить заявку.</p>
+        <div id="channel-join-requests-list"></div>
+        <div id="channel-join-requests-msg" class="modal-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="friend-requests-modal" onclick="closeModal('friend-requests-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Заявки в друзья</span>
+        <button class="modal-close" type="button" onclick="closeModal('friend-requests-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="friend-requests-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="blocked-users-modal" onclick="closeModal('blocked-users-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Заблокированные пользователи</span>
+        <button class="modal-close" type="button" onclick="closeModal('blocked-users-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Здесь можно разблокировать пользователя. После разблокировки чат останется доступным, если это разрешает приватность личных сообщений.</p>
+        <div id="blocked-users-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="profile-settings-modal" onclick="closeModal('profile-settings-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span>Настройки профиля</span>
+        <button class="modal-close" type="button" onclick="closeModal('profile-settings-modal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="profile-display-name">Ник</label>
+          <input id="profile-display-name" type="text" maxlength="40" placeholder="Ваш ник">
+        </div>
+        <div class="form-group">
+          <label for="profile-pm-privacy">Кто может писать мне в личные сообщения</label>
+          <select id="profile-pm-privacy" class="select-input">
+            <option value="everyone">Все пользователи</option>
+            <option value="friends">Только друзья</option>
+          </select>
+        </div>
+        <button class="btn-primary" type="button" onclick="saveProfileSettings()">Сохранить</button>
+        <div id="profile-settings-msg" class="modal-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    window.ME = {
+      id: {{ user.id }},
+      username: {{ user.username | tojson }},
+      display_name: {{ user.display_name | tojson }}
+    };
+  </script>
+  <script src="{{ url_for('static', filename='chat.js') }}"></script>
+</body>
+</html>

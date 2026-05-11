@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Регистрация — MiniGram</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page">
+<div class="auth-box">
+  <div class="auth-logo">✈️</div>
+  <h1 class="auth-title">MiniGram</h1>
+  <p class="auth-sub">Создайте аккаунт</p>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash-msg">{{ messages[0] }}</div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <input class="input" type="text" name="username" placeholder="Имя пользователя" required autofocus>
+    <input class="input" type="password" name="password" placeholder="Пароль" required>
+    <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+  </form>
+
+  <p class="auth-link">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+</div>
+</body>
+</html>
