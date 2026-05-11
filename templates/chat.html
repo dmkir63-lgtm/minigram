@@ -16,8 +16,7 @@
       <div class="sidebar-top">
         <button class="menu-btn" type="button" onclick="toggleMenu()">☰</button>
         <div class="search-bar">
-          <input id="search-input" type="text" placeholder="Поиск по нику, @тегу или каналу" autocomplete="off"
-            oninput="onSearchInput()">
+          <input id="search-input" type="text" placeholder="Поиск по нику, @тегу или каналу" autocomplete="off" oninput="onSearchInput()">
         </div>
       </div>
 
@@ -41,22 +40,14 @@
             <div class="chat-header-sub" id="chat-header-sub"></div>
           </div>
           <div class="chat-header-actions">
-            <button class="icon-btn hidden" type="button" id="add-friend-btn" onclick="addActiveFriend()"
-              title="Добавить в друзья">➕</button>
-            <button class="icon-btn hidden" type="button" id="remove-friend-btn" onclick="removeActiveFriend()"
-              title="Убрать из друзей">➖</button>
-            <button class="icon-btn hidden" type="button" id="block-user-btn" onclick="toggleActiveBlock()"
-              title="Заблокировать">🚫</button>
-            <button class="icon-btn hidden" type="button" id="delete-chat-btn" onclick="deleteActivePrivateChat()"
-              title="Удалить чат и историю">🗑️</button>
-            <button class="icon-btn hidden" type="button" id="join-requests-btn" onclick="openJoinRequestsModal()"
-              title="Заявки на вступление">📥</button>
-            <button class="icon-btn hidden" type="button" id="settings-btn" onclick="openChannelSettingsModal()"
-              title="Настройки канала">⚙️</button>
-            <button class="icon-btn hidden" type="button" id="leave-channel-btn" onclick="leaveChannel()"
-              title="Убрать из своих каналов">🚪</button>
-            <button class="icon-btn hidden" type="button" id="invite-btn" onclick="showInvite()"
-              title="Инвайт-ссылка">🔗</button>
+            <button class="icon-btn hidden" type="button" id="add-friend-btn" onclick="addActiveFriend()" title="Добавить в друзья">➕</button>
+            <button class="icon-btn hidden" type="button" id="remove-friend-btn" onclick="removeActiveFriend()" title="Убрать из друзей">➖</button>
+            <button class="icon-btn hidden" type="button" id="block-user-btn" onclick="toggleActiveBlock()" title="Заблокировать">🚫</button>
+            <button class="icon-btn hidden" type="button" id="delete-chat-btn" onclick="deleteActivePrivateChat()" title="Удалить чат и историю">🗑️</button>
+            <button class="icon-btn hidden" type="button" id="join-requests-btn" onclick="openJoinRequestsModal()" title="Заявки на вступление">📥</button>
+            <button class="icon-btn hidden" type="button" id="settings-btn" onclick="openChannelSettingsModal()" title="Настройки канала">⚙️</button>
+            <button class="icon-btn hidden" type="button" id="leave-channel-btn" onclick="leaveChannel()" title="Убрать из своих каналов">🚪</button>
+            <button class="icon-btn hidden" type="button" id="invite-btn" onclick="showInvite()" title="Инвайт-ссылка">🔗</button>
           </div>
         </header>
 
@@ -68,8 +59,7 @@
           <button class="send-btn" id="send-btn" type="button" onclick="sendMessage()" aria-label="Отправить">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round"></path>
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
           </button>
         </div>
@@ -89,8 +79,7 @@
       <div class="menu-items">
         <button class="menu-item" type="button" onclick="openCreateChannel()">➕ Создать канал</button>
         <button class="menu-item" type="button" onclick="openJoinChannel()">🔗 Войти по инвайту</button>
-        <button class="menu-item" type="button" onclick="openFriendRequests()">👥 Заявки в друзья <span id="req-badge"
-            class="badge hidden">0</span></button>
+        <button class="menu-item" type="button" onclick="openFriendRequests()">👥 Заявки в друзья <span id="req-badge" class="badge hidden">0</span></button>
         <button class="menu-item" type="button" onclick="openBlockedUsers()">🚫 Заблокированные</button>
         <button class="menu-item" type="button" onclick="openProfileSettings()">⚙️ Настройки профиля</button>
         <button class="menu-item danger" type="button" onclick="location.href='/logout'">↩ Выйти</button>
@@ -189,23 +178,23 @@
           <div class="admin-title">Текущие админы</div>
           <div id="admins-list" class="admin-list-box compact"></div>
         </div>
+
         <div class="admin-block">
           <div class="admin-title">Добавить админа</div>
-          <p class="hint">Назначать админов можно только из участников канала. Админы могут публиковать посты и
-            принимать заявки.</p>
+          <p class="hint">Назначать админов можно только из участников канала. Админы могут публиковать посты и принимать заявки.</p>
           <div class="form-group admin-search-group">
             <label for="admin-search-input">Поиск подписчика</label>
-            <input id="admin-search-input" type="text" placeholder="Введите ник или @тег" autocomplete="off"
-              oninput="onAdminSearchInput()">
+            <input id="admin-search-input" type="text" placeholder="Введите ник или @тег" autocomplete="off" oninput="onAdminSearchInput()">
           </div>
           <div id="admin-candidates-list" class="admin-list-box candidates"></div>
         </div>
+
         <div class="admin-block danger-zone">
           <div class="admin-title">Опасная зона</div>
-          <p class="hint">Удаление канала полностью стирает канал, участников, заявки и все посты канала из базы данных.
-          </p>
+          <p class="hint">Удаление канала полностью стирает канал, участников, заявки и все посты канала из базы данных.</p>
           <button class="btn-danger-wide" type="button" onclick="deleteActiveChannel()">Удалить канал</button>
         </div>
+
         <div id="admins-msg" class="modal-msg"></div>
       </div>
     </div>
@@ -218,8 +207,7 @@
         <button class="modal-close" type="button" onclick="closeModal('join-requests-modal')">✕</button>
       </div>
       <div class="modal-body">
-        <p class="hint">Для закрытого канала новые участники появляются здесь. Владелец и админы могут принять или
-          отклонить заявку.</p>
+        <p class="hint">Для закрытого канала новые участники появляются здесь. Владелец и админы могут принять или отклонить заявку.</p>
         <div id="channel-join-requests-list"></div>
         <div id="channel-join-requests-msg" class="modal-msg"></div>
       </div>
@@ -245,8 +233,7 @@
         <button class="modal-close" type="button" onclick="closeModal('blocked-users-modal')">✕</button>
       </div>
       <div class="modal-body">
-        <p class="hint">Здесь можно разблокировать пользователя. После разблокировки чат останется доступным, если это
-          разрешает приватность личных сообщений.</p>
+        <p class="hint">Здесь можно разблокировать пользователя. После разблокировки чат останется доступным, если это разрешает приватность личных сообщений.</p>
         <div id="blocked-users-list"></div>
       </div>
     </div>
@@ -291,10 +278,9 @@
       </div>
 
       <div class="about-body">
-        <a class="about-repo" href="https://github.com/jaruccky/minigram" target="_blank" rel="noopener noreferrer">
-          Открыть репозиторий GitHub
-        </a>
-        <textarea class="about-text" readonly># MiniGram
+        <a class="about-repo" href="https://github.com/jaruccky/minigram" target="_blank" rel="noopener noreferrer">Открыть репозиторий GitHub</a>
+
+        <pre class="about-text"># MiniGram
 
 Учебный веб-мессенджер на Flask, Socket.IO и SQLite/SQLCipher.
 
@@ -385,19 +371,21 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 ```
 
-Если `SMTP_USER` и `SMTP_PASS` пустые, код подтверждения будет выводиться в консоль Docker.</textarea>
+Если `SMTP_USER` и `SMTP_PASS` пустые, код подтверждения будет выводиться в консоль Docker.</pre>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script>
-    window.ME = {
-      id: {{ user.id }},
-    username: { { user.username | tojson } },
-    display_name: { { user.display_name | tojson } }
-    };
+
+  <script id="me-data" type="application/json">
+{{ {"id": user.id, "username": user.username, "display_name": user.display_name} | tojson }}
   </script>
+
+  <script>
+    window.ME = JSON.parse(document.getElementById('me-data').textContent);
+  </script>
+
   <script src="{{ url_for('static', filename='chat.js') }}"></script>
 </body>
 
