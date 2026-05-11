@@ -1,0 +1,82 @@
+/* ── Channel settings modal: scrollable and safe for many subscribers ── */
+.modal-overlay {
+  padding: 16px;
+}
+
+.modal-channel-settings {
+  max-width: 560px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-channel-settings .modal-header {
+  flex-shrink: 0;
+}
+
+.modal-body-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modal-channel-settings .modal-body-scroll {
+  max-height: calc(100vh - 88px);
+}
+
+.admin-list-box {
+  background: rgba(0, 0, 0, .08);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 10px;
+}
+
+.admin-list-box.compact {
+  max-height: 190px;
+  overflow-y: auto;
+}
+
+.admin-list-box.candidates {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.admin-search-group {
+  margin-bottom: 10px;
+}
+
+.admin-search-group input {
+  width: 100%;
+}
+
+.admin-more-hint {
+  padding: 10px 0 6px;
+  text-align: left;
+}
+
+@media (max-height: 640px) {
+  .modal-channel-settings {
+    max-height: calc(100vh - 16px);
+  }
+
+  .modal-channel-settings .modal-body-scroll {
+    max-height: calc(100vh - 72px);
+  }
+
+  .admin-list-box.compact {
+    max-height: 130px;
+  }
+
+  .admin-list-box.candidates {
+    max-height: 170px;
+  }
+}
+
+@media (max-width: 560px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .modal-channel-settings {
+    max-width: 100%;
+  }
+}

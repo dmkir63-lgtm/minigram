@@ -1,0 +1,262 @@
+/* ── MODALS ──────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, .6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn .15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0
+  }
+
+  to {
+    opacity: 1
+  }
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px
+}
+
+.modal-close:hover {
+  color: var(--text)
+}
+
+.modal-body {
+  padding: 20px
+}
+
+.form-group {
+  margin-bottom: 14px
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 6px
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--input-bg);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.form-group input:focus {
+  border-color: var(--accent)
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover)
+}
+
+.modal-msg {
+  font-size: 13px;
+  margin-top: 10px;
+  min-height: 16px;
+  color: var(--error)
+}
+
+.modal-msg.ok {
+  color: var(--success)
+}
+
+/* Menu panel */
+.menu-panel {
+  background: var(--surface);
+  border-radius: var(--radius);
+  width: 280px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+  overflow: hidden;
+}
+
+.menu-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface2);
+}
+
+.menu-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.menu-username {
+  font-size: 15px;
+  font-weight: 600
+}
+
+.menu-email {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px
+}
+
+.menu-items {
+  padding: 8px 0
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.menu-item:hover {
+  background: var(--hover)
+}
+
+.menu-item.danger {
+  color: var(--error)
+}
+
+/* Invite box */
+.invite-box {
+  background: var(--input-bg);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  word-break: break-all;
+  color: var(--text2);
+  font-family: 'Inter', monospace;
+}
+
+/* Friend request items */
+.fr-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.fr-item:last-child {
+  border-bottom: none
+}
+
+.fr-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500
+}
+
+.fr-actions {
+  display: flex;
+  gap: 6px
+}
+
+.btn-accept {
+  padding: 5px 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-decline {
+  padding: 5px 12px;
+  background: var(--surface2);
+  border: none;
+  border-radius: 6px;
+  color: var(--text2);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.no-requests {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  padding: 16px 0
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  padding: 0 4px;
+  margin-left: 6px;
+}
