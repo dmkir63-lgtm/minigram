@@ -422,6 +422,7 @@
     }
 
     @media (max-width: 920px) {
+
       .hero,
       .setup {
         grid-template-columns: 1fr;
@@ -473,7 +474,8 @@
 </head>
 
 <body>
-  {% set login_href = url_for('login_page', next=request.full_path) if request.query_string else url_for('login_page') %}
+  {% set login_href = url_for('login_page', next=request.full_path) if request.query_string else url_for('login_page')
+  %}
 
   <div class="page">
     <header class="topbar">
@@ -555,13 +557,15 @@
       <section class="section" id="features">
         <div class="section-head">
           <h2>Что реализовано</h2>
-          <p class="section-note">Главная страница теперь содержит описание проекта и инструкцию, доступные до входа.</p>
+          <p class="section-note">Главная страница теперь содержит описание проекта и инструкцию, доступные до входа.
+          </p>
         </div>
         <div class="grid">
           <article class="card">
             <div class="card-icon">💬</div>
             <h3>Личные чаты</h3>
-            <p>Поиск пользователей, добавление в друзья, приватность личных сообщений, блокировки и статусы доставки.</p>
+            <p>Поиск пользователей, добавление в друзья, приватность личных сообщений, блокировки и статусы доставки.
+            </p>
           </article>
           <article class="card">
             <div class="card-icon">📣</div>
@@ -579,7 +583,8 @@
       <section class="section" id="setup">
         <div class="section-head">
           <h2>Гайд для сетапа</h2>
-          <p class="section-note">Быстрый запуск через Docker Compose. Если SMTP не настроен, коды подтверждения выводятся в консоль контейнера.</p>
+          <p class="section-note">Быстрый запуск через Docker Compose. Если SMTP не настроен, коды подтверждения
+            выводятся в консоль контейнера.</p>
         </div>
 
         <div class="setup">
@@ -601,13 +606,6 @@
             <div class="step">
               <div class="num">3</div>
               <div>
-                <b>Подготовить папку базы</b>
-                <span>`./data` монтируется внутрь контейнера как `/app/data`.</span>
-              </div>
-            </div>
-            <div class="step">
-              <div class="num">4</div>
-              <div>
                 <b>Запустить контейнер</b>
                 <span>После сборки сайт будет доступен на выбранном публичном порте.</span>
               </div>
@@ -619,8 +617,6 @@ cd minigram
 
 cp .env.example .env
 python -c "import secrets; print(secrets.token_urlsafe(32))"
-mkdir -p data
-
 sudo docker-compose up --build
 
 # открыть в браузере:

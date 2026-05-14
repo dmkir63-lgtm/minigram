@@ -6,6 +6,7 @@ import re
 import smtplib
 import string
 import time
+import os
 
 from flask import jsonify, session
 from flask_socketio import emit
@@ -35,7 +36,14 @@ def sql_quote(value):
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def ensure_db_storage():
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+
+
 def get_db():
+    ensure_db_storage()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     if DB_ENCRYPTION_ENABLED:

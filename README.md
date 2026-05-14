@@ -44,19 +44,14 @@ FLASK_DEBUG=0
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
-### 3. Создать папку для базы
 
-```bash
-mkdir -p data
-```
-
-### 4. Запустить проект
+### 3. Запустить проект
 
 ```bash
 sudo docker-compose up --build
 ```
 
-### 5. Открыть сайт
+### 4. Открыть сайт
 
 
 На сервере:
