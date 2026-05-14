@@ -16,6 +16,9 @@ def index():
     session["display_name"] = user["display_name"]
     return render_template("chat.html", user=user)
 
+@app.route("/landing")
+def index():
+    return render_template("landing.html", user=user)
 
 @app.route("/auth")
 @app.route("/login", methods=["GET"])
