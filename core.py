@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
-import os
 import hashlib
 import random
 import re
 import smtplib
 import string
 import time
+import os
 
 from flask import jsonify, session
 from flask_socketio import emit
@@ -36,7 +36,14 @@ def sql_quote(value):
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def ensure_db_storage():
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+
+
 def get_db():
+    ensure_db_storage()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     if DB_ENCRYPTION_ENABLED:
@@ -218,8 +225,6 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_channel_join_requests_user_status ON channel_join_requests(user_id, status);
         """)
 
-        seed_fake_data(conn)
-
 
 def hash_password(password):
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
@@ -241,265 +246,6 @@ def gen_code():
 
 def gen_invite():
     return "".join(random.choices(string.ascii_letters + string.digits, k=12))
-
-
-def seed_fake_data(conn):
-    if os.environ.get("SEED_FAKE_DATA", "1") != "1":
-        return
-
-    created_at = now_str()
-
-    users = [
-        ("alice", "Алиса", "alice@minigram.demo", "123456", "everyone"),
-        ("bob", "Боб", "bob@minigram.demo", "123456", "everyone"),
-        ("carol", "Карина", "carol@minigram.demo", "123456", "friends"),
-        ("dima", "Дима", "dima@minigram.demo", "123456", "everyone"),
-        ("eva", "Ева", "eva@minigram.demo", "123456", "friends"),
-    ]
-
-    for username, display_name, email, password, pm_privacy in users:
-        conn.execute(
-            """INSERT OR IGNORE INTO users
-               (username, display_name, email, password_hash, pm_privacy, created_at)
-               VALUES (?,?,?,?,?,?)""",
-            (
-                username,
-                display_name,
-                email,
-                hash_password(password),
-                pm_privacy,
-                created_at,
-            ),
-        )
-
-    usernames = [user[0] for user in users]
-    placeholders = ",".join("?" for _ in usernames)
-    user_rows = conn.execute(
-        f"SELECT id, username FROM users WHERE username IN ({placeholders})",
-        usernames,
-    ).fetchall()
-    user_ids = {row["username"]: row["id"] for row in user_rows}
-
-    if len(user_ids) != len(users):
-        return
-
-    friendships = [
-        ("alice", "bob"),
-        ("alice", "carol"),
-        ("bob", "dima"),
-        ("carol", "eva"),
-    ]
-
-    for from_username, to_username in friendships:
-        conn.execute(
-            """INSERT OR IGNORE INTO friend_requests
-               (from_id, to_id, status, created_at)
-               VALUES (?,?,?,?)""",
-            (
-                user_ids[from_username],
-                user_ids[to_username],
-                "accepted",
-                created_at,
-            ),
-        )
-
-    channels = [
-        (
-            "Общий чат",
-            "general",
-            "Публичный канал для общения и тестирования MiniGram.",
-            "alice",
-            "demo_general_invite",
-            0,
-        ),
-        (
-            "Новости проекта",
-            "project_news",
-            "Канал с новостями учебного проекта.",
-            "bob",
-            "demo_project_news",
-            0,
-        ),
-        (
-            "Закрытый клуб",
-            "private_club",
-            "Приватный канал, куда можно попасть только после одобрения заявки.",
-            "alice",
-            "demo_private_club",
-            1,
-        ),
-    ]
-
-    for name, username, description, owner_username, invite_code, is_private in channels:
-        conn.execute(
-            """INSERT OR IGNORE INTO channels
-               (name, username, description, owner_id, invite_code, is_private, created_at)
-               VALUES (?,?,?,?,?,?,?)""",
-            (
-                name,
-                username,
-                description,
-                user_ids[owner_username],
-                invite_code,
-                is_private,
-                created_at,
-            ),
-        )
-
-    channel_usernames = [channel[1] for channel in channels]
-    placeholders = ",".join("?" for _ in channel_usernames)
-    channel_rows = conn.execute(
-        f"SELECT id, username FROM channels WHERE username IN ({placeholders})",
-        channel_usernames,
-    ).fetchall()
-    channel_ids = {row["username"]: row["id"] for row in channel_rows}
-
-    members = {
-        "general": [
-            ("alice", "owner"),
-            ("bob", "admin"),
-            ("carol", "subscriber"),
-            ("dima", "subscriber"),
-            ("eva", "subscriber"),
-        ],
-        "project_news": [
-            ("bob", "owner"),
-            ("alice", "admin"),
-            ("dima", "subscriber"),
-        ],
-        "private_club": [
-            ("alice", "owner"),
-            ("carol", "admin"),
-        ],
-    }
-
-    for channel_username, channel_members in members.items():
-        channel_id = channel_ids.get(channel_username)
-        if not channel_id:
-            continue
-        for member_username, role in channel_members:
-            conn.execute(
-                """INSERT OR IGNORE INTO channel_members
-                   (channel_id, user_id, role, joined_at)
-                   VALUES (?,?,?,?)""",
-                (
-                    channel_id,
-                    user_ids[member_username],
-                    role,
-                    created_at,
-                ),
-            )
-
-    private_channel_id = channel_ids.get("private_club")
-    if private_channel_id:
-        conn.execute(
-            """INSERT OR IGNORE INTO channel_join_requests
-               (channel_id, user_id, status, created_at)
-               VALUES (?,?,?,?)""",
-            (
-                private_channel_id,
-                user_ids["eva"],
-                "pending",
-                created_at,
-            ),
-        )
-
-    channel_messages = {
-        "general": [
-            ("alice", "Добро пожаловать в MiniGram! Это демо-канал."),
-            ("bob", "Сообщения в каналах приходят через Socket.IO."),
-            ("dima", "Можно проверить роли, подписчиков и историю сообщений."),
-        ],
-        "project_news": [
-            ("bob", "Сегодня добавили автоматическое создание тестовых данных."),
-            ("alice", "Теперь после перезапуска база сама наполняется демо-контентом."),
-        ],
-        "private_club": [
-            ("alice", "Это пример закрытого канала."),
-            ("carol", "Новые участники попадают сюда только после одобрения."),
-        ],
-    }
-
-    for channel_username, messages in channel_messages.items():
-        channel_id = channel_ids.get(channel_username)
-        if not channel_id:
-            continue
-        has_messages = conn.execute(
-            "SELECT 1 FROM messages WHERE chat_type='channel' AND channel_id=? LIMIT 1",
-            (channel_id,),
-        ).fetchone()
-        if has_messages:
-            continue
-        for sender_username, text in messages:
-            conn.execute(
-                """INSERT INTO messages
-                   (chat_type, channel_id, sender_id, username, text, delivery_status, created_at)
-                   VALUES (?,?,?,?,?,?,?)""",
-                (
-                    "channel",
-                    channel_id,
-                    user_ids[sender_username],
-                    sender_username,
-                    text,
-                    "sent",
-                    created_at,
-                ),
-            )
-
-    private_pairs = [
-        (
-            "alice",
-            "bob",
-            [
-                ("alice", "Привет! Это тестовая личная переписка."),
-                ("bob", "Да, можно проверить статус доставки и историю."),
-                ("alice", "Отлично, значит демо-данные работают."),
-            ],
-        ),
-        (
-            "carol",
-            "eva",
-            [
-                ("carol", "Привет, я добавила тебя в друзья."),
-                ("eva", "Супер, теперь можно тестировать приватные сообщения."),
-            ],
-        ),
-    ]
-
-    for first_username, second_username, messages in private_pairs:
-        first_id = user_ids[first_username]
-        second_id = user_ids[second_username]
-        has_messages = conn.execute(
-            """SELECT 1 FROM messages
-               WHERE chat_type='private'
-                 AND ((sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?))
-               LIMIT 1""",
-            (first_id, second_id, second_id, first_id),
-        ).fetchone()
-        if has_messages:
-            continue
-
-        for sender_username, text in messages:
-            sender_id = user_ids[sender_username]
-            receiver_username = second_username if sender_username == first_username else first_username
-            receiver_id = user_ids[receiver_username]
-            conn.execute(
-                """INSERT INTO messages
-                   (chat_type, sender_id, receiver_id, username, text,
-                    delivery_status, delivered_at, read_at, created_at)
-                   VALUES (?,?,?,?,?,?,?,?,?)""",
-                (
-                    "private",
-                    sender_id,
-                    receiver_id,
-                    sender_username,
-                    text,
-                    "read",
-                    created_at,
-                    created_at,
-                    created_at,
-                ),
-            )
 
 
 def get_user(user_id):
