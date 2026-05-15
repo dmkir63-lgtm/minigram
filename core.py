@@ -224,7 +224,7 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_channel_join_requests_channel_status ON channel_join_requests(channel_id, status);
             CREATE INDEX IF NOT EXISTS idx_channel_join_requests_user_status ON channel_join_requests(user_id, status);
         """)
-    seed_fake_data(conn)
+        seed_fake_data(conn)
 
 
 def hash_password(password):
