@@ -3,8 +3,6 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="google-site-verification" content="UV5ZIr9wdo-e2H9F4nlZoMFp3zAeXmol8c_vB-J3A-g" />
-  <meta name="yandex-verification" content="df9ad87ff69df568" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MiniGram — учебный мессенджер</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -168,6 +166,36 @@
       color: var(--text2);
       font-size: 18px;
       margin-bottom: 28px;
+    }
+
+
+    .demo-login {
+      margin: -12px 0 24px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(46, 166, 255, .22);
+      background: rgba(46, 166, 255, .10);
+      color: var(--text);
+      max-width: 520px;
+    }
+
+    .demo-login b {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .demo-login span {
+      display: inline-block;
+      margin-right: 14px;
+      color: var(--text2);
+      font-size: 14px;
+    }
+
+    .demo-login code {
+      color: #d7ecff;
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      font-weight: 700;
     }
 
     .hero-actions {
@@ -501,6 +529,11 @@
             MiniGram показывает базовую архитектуру веб-мессенджера: регистрацию, личные сообщения,
             каналы, заявки, роли, доставку сообщений и обновления в реальном времени через Socket.IO.
           </p>
+          <div class="demo-login">
+            <b>Демо-вход без регистрации</b>
+            <span>Логин: <code>alice</code></span>
+            <span>Пароль: <code>123456</code></span>
+          </div>
           <div class="hero-actions">
             <a class="btn btn-primary" href="{{ login_href }}">Войти в MiniGram</a>
             <a class="btn btn-ghost" href="#setup">Как запустить</a>
