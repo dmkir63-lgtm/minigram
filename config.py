@@ -26,6 +26,14 @@ SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
+SMTP_TIMEOUT = int(os.environ.get("SMTP_TIMEOUT", "10"))
+
+# Railway Free/Hobby обычно не пропускает обычный SMTP.
+# Поэтому для деплоя лучше использовать HTTP API почтового сервиса, например Resend.
+# Если RESEND_API_KEY задан, send_email сначала использует Resend.
+# Если не задан, останется старая SMTP-логика.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "").strip()
+MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER or "MiniGram <onboarding@resend.dev>")
 
 APP_HOST = os.environ.get("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.environ.get("APP_PORT", "5000"))

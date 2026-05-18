@@ -8,6 +8,7 @@ import string
 import time
 import os
 
+import requests
 from flask import jsonify, session
 from flask_socketio import emit
 
@@ -15,9 +16,12 @@ from config import (
     DB_ENCRYPTION_ENABLED,
     DB_ENCRYPTION_KEY,
     DB_PATH,
+    MAIL_FROM,
+    RESEND_API_KEY,
     SMTP_HOST,
     SMTP_PASS,
     SMTP_PORT,
+    SMTP_TIMEOUT,
     SMTP_USER,
     sqlite3,
 )
@@ -523,6 +527,30 @@ def join_or_request_channel(conn, channel, user_id):
 
 
 def send_email(to, subject, body):
+    if RESEND_API_KEY:
+        try:
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {RESEND_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": MAIL_FROM,
+                    "to": [to],
+                    "subject": subject,
+                    "text": body,
+                },
+                timeout=SMTP_TIMEOUT,
+            )
+            if response.status_code >= 400:
+                print(f"[EMAIL ERROR] Resend {response.status_code}: {response.text}")
+                return False
+            return True
+        except Exception as exc:
+            print(f"[EMAIL ERROR] Resend {type(exc).__name__}: {exc}")
+            return False
+
     if not SMTP_USER or not SMTP_PASS:
         print("\n[MiniGram email fallback]")
         print(f"To: {to}")
@@ -534,15 +562,17 @@ def send_email(to, subject, body):
     try:
         msg = MIMEText(body, "plain", "utf-8")
         msg["Subject"] = subject
-        msg["From"] = SMTP_USER
+        msg["From"] = MAIL_FROM or SMTP_USER
         msg["To"] = to
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as smtp:
+            smtp.ehlo()
             smtp.starttls()
+            smtp.ehlo()
             smtp.login(SMTP_USER, SMTP_PASS)
             smtp.sendmail(SMTP_USER, [to], msg.as_string())
         return True
     except Exception as exc:
-        print(f"[EMAIL ERROR] {exc}")
+        print(f"[EMAIL ERROR] SMTP {type(exc).__name__}: {exc}")
         return False
 
 def seed_fake_data(conn):

@@ -5,3 +5,4 @@ eventlet==0.36.1
 Flask-Limiter==3.8.0
 sqlcipher3-binary>=0.5.4
 python-dotenv
+requests>=2.31.0
