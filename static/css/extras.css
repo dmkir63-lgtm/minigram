@@ -273,6 +273,51 @@
   filter: brightness(1.08);
 }
 
+.btn-secondary-wide {
+  width: 100%;
+  padding: 11px;
+  margin-top: 8px;
+  background: var(--surface2);
+  border: none;
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary-wide:hover {
+  background: var(--hover);
+}
+
+.telegram-settings {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.telegram-settings-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.telegram-status {
+  color: var(--text2);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.telegram-status.ok {
+  color: var(--success);
+}
+
+.telegram-settings .invite-box {
+  margin-bottom: 10px;
+}
+
 .bubble-text .chat-link {
   color: inherit;
   text-decoration: underline;

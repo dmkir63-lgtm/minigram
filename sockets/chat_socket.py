@@ -81,46 +81,19 @@ def socket_send_private_message(data):
             emit("app_error", {"error": reason})
             return
 
-        created_at = now_str()
         receiver_online = other_id in online_users.values()
-        delivery_status = "delivered" if receiver_online else "sent"
-        delivered_at = created_at if receiver_online else None
-        cur = conn.execute(
-            """INSERT INTO messages (chat_type, sender_id, receiver_id, username, text, delivery_status, delivered_at, created_at)
-               VALUES (?,?,?,?,?,?,?,?)""",
-            (
-                "private",
-                uid,
-                other_id,
-                session["username"],
-                text,
-                delivery_status,
-                delivered_at,
-                created_at,
-            ),
-        )
-        message_id = cur.lastrowid
-        conn.execute(
-            """DELETE FROM hidden_private_chats
-               WHERE (user_id=? AND peer_id=?) OR (user_id=? AND peer_id=?)""",
-            (uid, other_id, other_id, uid),
+        payload = insert_private_message(
+            conn,
+            uid,
+            other_id,
+            session["username"],
+            session.get("display_name", session["username"]),
+            text,
+            receiver_online,
         )
 
-    payload = {
-        "id": message_id,
-        "chat_type": "private",
-        "sender_id": uid,
-        "receiver_id": other_id,
-        "username": session["username"],
-        "display_name": session.get("display_name", session["username"]),
-        "text": text,
-        "delivery_status": delivery_status,
-        "delivered_at": delivered_at,
-        "read_at": None,
-        "created_at": created_at,
-    }
-    emit("new_private_message", payload, to=f"user_{uid}")
-    emit("new_private_message", payload, to=f"user_{other_id}")
+    emit_private_message(payload)
+    notify_telegram_private_message(other_id, uid, payload, receiver_online)
 
 
 @socketio.on("send_channel_message")

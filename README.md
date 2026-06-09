@@ -36,6 +36,10 @@ APP_PORT=5000
 PUBLIC_PORT=5000
 
 FLASK_DEBUG=0
+
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_USERNAME=
+TELEGRAM_WEBHOOK_SECRET=
 ```
 
 Сгенерировать ключи можно так:
@@ -86,3 +90,26 @@ SMTP_PORT=587
 ```
 
 Если `SMTP_USER` и `SMTP_PASS` пустые, код подтверждения будет выводиться в консоль Docker.
+
+## Telegram Bot
+
+Интеграция работает через официальный Telegram Bot API.
+
+1. Создайте бота в `@BotFather`.
+2. Укажите в `.env`:
+
+```env
+TELEGRAM_BOT_TOKEN=123456:token
+TELEGRAM_BOT_USERNAME=your_bot
+TELEGRAM_WEBHOOK_SECRET=random-secret
+```
+
+3. После деплоя задайте webhook:
+
+```bash
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=https://YOUR_DOMAIN/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
+В MiniGram откройте настройки профиля, нажмите "Подключить Telegram" и перейдите по ссылке. В боте можно писать `/to username текст`; если сообщение пришло из MiniGram, можно ответить обычным текстом.

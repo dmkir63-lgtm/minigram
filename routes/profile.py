@@ -11,6 +11,12 @@ def me_settings():
         return err
 
     user = get_user(session["user_id"])
+    with get_db() as conn:
+        telegram = conn.execute(
+            """SELECT telegram_username, notifications_mode, linked_at
+               FROM telegram_links WHERE user_id=?""",
+            (session["user_id"],),
+        ).fetchone()
     return jsonify(
         {
             "id": user["id"],
@@ -18,6 +24,16 @@ def me_settings():
             "display_name": user["display_name"],
             "email": user["email"],
             "pm_privacy": user["pm_privacy"],
+            "telegram": (
+                {
+                    "linked": True,
+                    "telegram_username": telegram["telegram_username"],
+                    "notifications_mode": telegram["notifications_mode"],
+                    "linked_at": telegram["linked_at"],
+                }
+                if telegram
+                else {"linked": False, "notifications_mode": "offline"}
+            ),
         }
     )
 

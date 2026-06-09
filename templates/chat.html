@@ -257,6 +257,22 @@
             <option value="friends">Только друзья</option>
           </select>
         </div>
+        <div class="telegram-settings">
+          <div class="telegram-settings-title">Telegram</div>
+          <div id="telegram-status" class="telegram-status">Не подключён</div>
+          <div class="form-group">
+            <label for="telegram-notifications-mode">Сообщения в Telegram</label>
+            <select id="telegram-notifications-mode" class="select-input">
+              <option value="offline">Только когда я офлайн</option>
+              <option value="all">Все личные сообщения</option>
+              <option value="disabled">Не отправлять</option>
+            </select>
+          </div>
+          <div id="telegram-link-box" class="invite-box hidden"></div>
+          <button class="btn-primary" type="button" onclick="createTelegramLink()">Подключить Telegram</button>
+          <button class="btn-secondary-wide" type="button" onclick="saveTelegramSettings()">Сохранить Telegram</button>
+          <button class="btn-danger-wide" type="button" onclick="unlinkTelegram()">Отключить Telegram</button>
+        </div>
         <button class="btn-primary" type="button" onclick="saveProfileSettings()">Сохранить</button>
         <div id="profile-settings-msg" class="modal-msg"></div>
       </div>

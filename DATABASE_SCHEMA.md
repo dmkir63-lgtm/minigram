@@ -11,7 +11,9 @@ users
 ├─ channels: owner_id → users.id
 ├─ channel_members: channel_id → channels.id, user_id → users.id
 ├─ channel_join_requests: channel_id → channels.id, user_id/responded_by → users.id
-└─ messages: sender_id/receiver_id → users.id, channel_id → channels.id
+├─ messages: sender_id/receiver_id → users.id, channel_id → channels.id
+├─ telegram_links: user_id → users.id
+└─ telegram_link_tokens: user_id → users.id
 ```
 
 ## Таблицы
@@ -165,6 +167,34 @@ UNIQUE(channel_id, user_id)
 | `read_at` | `TEXT` | дата прочтения |
 | `created_at` | `TEXT NOT NULL` | дата создания |
 
+---
+
+### `telegram_links`
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | ID привязки |
+| `user_id` | `INTEGER UNIQUE NOT NULL` | пользователь MiniGram |
+| `telegram_chat_id` | `TEXT UNIQUE NOT NULL` | chat id Telegram |
+| `telegram_user_id` | `TEXT` | user id Telegram |
+| `telegram_username` | `TEXT` | username Telegram |
+| `notifications_mode` | `TEXT NOT NULL DEFAULT 'offline'` | `disabled` / `offline` / `all` |
+| `last_peer_id` | `INTEGER` | последний собеседник для ответа из Telegram |
+| `linked_at` | `TEXT NOT NULL` | дата привязки |
+| `updated_at` | `TEXT NOT NULL` | дата обновления |
+
+---
+
+### `telegram_link_tokens`
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | ID токена |
+| `user_id` | `INTEGER NOT NULL` | пользователь MiniGram |
+| `token` | `TEXT UNIQUE NOT NULL` | одноразовый токен `/start` |
+| `created_at` | `TEXT NOT NULL` | дата создания |
+| `expires_at` | `TEXT NOT NULL` | срок действия |
+
 ## Индексы
 
 ```sql
@@ -180,4 +210,7 @@ idx_hidden_private_chats_user
 idx_channel_members_channel_role
 idx_channel_join_requests_channel_status
 idx_channel_join_requests_user_status
+idx_telegram_links_chat
+idx_telegram_tokens_token
+idx_telegram_tokens_user
 ```

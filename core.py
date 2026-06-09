@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
+from email.utils import parseaddr
 import hashlib
 import random
 import re
+import secrets
 import smtplib
 import string
 import time
@@ -17,12 +19,15 @@ from config import (
     DB_ENCRYPTION_KEY,
     DB_PATH,
     MAIL_FROM,
+    MAILJET_API_KEY,
+    MAILJET_SECRET_KEY,
     RESEND_API_KEY,
     SMTP_HOST,
     SMTP_PASS,
     SMTP_PORT,
     SMTP_TIMEOUT,
     SMTP_USER,
+    TELEGRAM_BOT_TOKEN,
     sqlite3,
 )
 from extensions import socketio
@@ -163,6 +168,26 @@ def init_db():
                 read_at TEXT,
                 created_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS telegram_links (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER UNIQUE NOT NULL,
+                telegram_chat_id TEXT UNIQUE NOT NULL,
+                telegram_user_id TEXT,
+                telegram_username TEXT,
+                notifications_mode TEXT NOT NULL DEFAULT 'offline',
+                last_peer_id INTEGER,
+                linked_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS telegram_link_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL
+            );
         """)
 
         add_column_if_missing(conn, "users", "display_name", "display_name TEXT")
@@ -185,6 +210,13 @@ def init_db():
         )
         add_column_if_missing(conn, "messages", "delivered_at", "delivered_at TEXT")
         add_column_if_missing(conn, "messages", "read_at", "read_at TEXT")
+        add_column_if_missing(
+            conn,
+            "telegram_links",
+            "notifications_mode",
+            "notifications_mode TEXT NOT NULL DEFAULT 'offline'",
+        )
+        add_column_if_missing(conn, "telegram_links", "last_peer_id", "last_peer_id INTEGER")
 
         conn.execute(
             "UPDATE users SET display_name=username WHERE display_name IS NULL OR TRIM(display_name)='' "
@@ -227,6 +259,9 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_channel_members_channel_role ON channel_members(channel_id, role);
             CREATE INDEX IF NOT EXISTS idx_channel_join_requests_channel_status ON channel_join_requests(channel_id, status);
             CREATE INDEX IF NOT EXISTS idx_channel_join_requests_user_status ON channel_join_requests(user_id, status);
+            CREATE INDEX IF NOT EXISTS idx_telegram_links_chat ON telegram_links(telegram_chat_id);
+            CREATE INDEX IF NOT EXISTS idx_telegram_tokens_token ON telegram_link_tokens(token);
+            CREATE INDEX IF NOT EXISTS idx_telegram_tokens_user ON telegram_link_tokens(user_id);
         """)
         seed_fake_data(conn)
 
@@ -251,6 +286,10 @@ def gen_code():
 
 def gen_invite():
     return "".join(random.choices(string.ascii_letters + string.digits, k=12))
+
+
+def gen_link_token():
+    return secrets.token_urlsafe(24)
 
 
 def get_user(user_id):
@@ -446,6 +485,111 @@ def can_send_private_message(conn, sender_id, receiver_id):
     return bool(state["can_message"]), state["block_reason"]
 
 
+def insert_private_message(conn, sender_id, receiver_id, username, display_name, text, receiver_online):
+    created_at = now_str()
+    delivery_status = "delivered" if receiver_online else "sent"
+    delivered_at = created_at if receiver_online else None
+    cur = conn.execute(
+        """INSERT INTO messages (chat_type, sender_id, receiver_id, username, text, delivery_status, delivered_at, created_at)
+           VALUES (?,?,?,?,?,?,?,?)""",
+        (
+            "private",
+            sender_id,
+            receiver_id,
+            username,
+            text,
+            delivery_status,
+            delivered_at,
+            created_at,
+        ),
+    )
+    conn.execute(
+        """DELETE FROM hidden_private_chats
+           WHERE (user_id=? AND peer_id=?) OR (user_id=? AND peer_id=?)""",
+        (sender_id, receiver_id, receiver_id, sender_id),
+    )
+    return {
+        "id": cur.lastrowid,
+        "chat_type": "private",
+        "sender_id": sender_id,
+        "receiver_id": receiver_id,
+        "username": username,
+        "display_name": display_name or username,
+        "text": text,
+        "delivery_status": delivery_status,
+        "delivered_at": delivered_at,
+        "read_at": None,
+        "created_at": created_at,
+    }
+
+
+def emit_private_message(payload):
+    socketio.emit("new_private_message", payload, to=f'user_{payload["sender_id"]}')
+    socketio.emit("new_private_message", payload, to=f'user_{payload["receiver_id"]}')
+
+
+def telegram_api(method, payload):
+    if not TELEGRAM_BOT_TOKEN:
+        return False
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/{method}",
+            json=payload,
+            timeout=10,
+        )
+        if response.status_code >= 400:
+            print(f"[TELEGRAM ERROR] {method} {response.status_code}: {response.text}")
+            return False
+        return True
+    except Exception as exc:
+        print(f"[TELEGRAM ERROR] {method} {type(exc).__name__}: {exc}")
+        return False
+
+
+def send_telegram_message(chat_id, text):
+    return telegram_api(
+        "sendMessage",
+        {
+            "chat_id": chat_id,
+            "text": text[:3900],
+            "disable_web_page_preview": True,
+        },
+    )
+
+
+def notify_telegram_private_message(receiver_id, sender_id, payload, receiver_online):
+    with get_db() as conn:
+        link = conn.execute(
+            """SELECT telegram_chat_id, notifications_mode
+               FROM telegram_links WHERE user_id=?""",
+            (receiver_id,),
+        ).fetchone()
+        if not link or link["notifications_mode"] == "disabled":
+            return
+        if link["notifications_mode"] == "offline" and receiver_online:
+            return
+
+        sender = conn.execute(
+            """SELECT username, COALESCE(display_name, username) AS display_name
+               FROM users WHERE id=?""",
+            (sender_id,),
+        ).fetchone()
+        telegram_chat_id = link["telegram_chat_id"]
+        sender_name = sender["display_name"] if sender else payload["username"]
+        conn.execute(
+            "UPDATE telegram_links SET last_peer_id=?, updated_at=? WHERE user_id=?",
+            (sender_id, now_str(), receiver_id),
+        )
+
+    text = (
+        f"Новое сообщение от {sender_name} (@{payload['username']}):\n\n"
+        f"{payload['text']}\n\n"
+        "Ответьте обычным сообщением, чтобы написать в этот диалог, "
+        "или используйте /to username текст."
+    )
+    send_telegram_message(telegram_chat_id, text)
+
+
 def channel_payload(conn, channel_id, user_id):
     row = conn.execute(
         """SELECT c.id, c.name, c.username, c.description, c.owner_id, c.invite_code,
@@ -526,7 +670,56 @@ def join_or_request_channel(conn, channel, user_id):
     }
 
 
+def parse_mail_from(value):
+    name, email = parseaddr(value or "")
+    if not email:
+        return "MiniGram", value or SMTP_USER
+    return name or "MiniGram", email
+
+
 def send_email(to, subject, body):
+    from_name, from_email = parse_mail_from(MAIL_FROM or SMTP_USER)
+
+    if MAILJET_API_KEY or MAILJET_SECRET_KEY:
+        if not MAILJET_API_KEY or not MAILJET_SECRET_KEY:
+            print("[EMAIL ERROR] Mailjet: задайте и MAILJET_API_KEY, и MAILJET_SECRET_KEY")
+            return False
+        if not from_email:
+            print("[EMAIL ERROR] Mailjet: задайте MAIL_FROM, например MiniGram <your@gmail.com>")
+            return False
+
+        try:
+            response = requests.post(
+                "https://api.mailjet.com/v3.1/send",
+                auth=(MAILJET_API_KEY, MAILJET_SECRET_KEY),
+                headers={"Content-Type": "application/json"},
+                json={
+                    "Messages": [
+                        {
+                            "From": {
+                                "Email": from_email,
+                                "Name": from_name,
+                            },
+                            "To": [
+                                {
+                                    "Email": to,
+                                }
+                            ],
+                            "Subject": subject,
+                            "TextPart": body,
+                        }
+                    ]
+                },
+                timeout=SMTP_TIMEOUT,
+            )
+            if response.status_code >= 400:
+                print(f"[EMAIL ERROR] Mailjet {response.status_code}: {response.text}")
+                return False
+            return True
+        except Exception as exc:
+            print(f"[EMAIL ERROR] Mailjet {type(exc).__name__}: {exc}")
+            return False
+
     if RESEND_API_KEY:
         try:
             response = requests.post(

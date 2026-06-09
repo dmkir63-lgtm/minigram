@@ -30,12 +30,22 @@ SMTP_TIMEOUT = int(os.environ.get("SMTP_TIMEOUT", "10"))
 
 # Railway Free/Hobby обычно не пропускает обычный SMTP.
 # Поэтому для деплоя лучше использовать HTTP API почтового сервиса, например Resend.
-# Если RESEND_API_KEY задан, send_email сначала использует Resend.
-# Если не задан, останется старая SMTP-логика.
+# Если MAILJET_API_KEY и MAILJET_SECRET_KEY заданы, send_email использует Mailjet.
+# Если Mailjet не задан, может использоваться Resend, а затем старая SMTP-логика.
+
+# Mailjet работает через HTTPS API, поэтому подходит для Railway без SMTP-портов.
+# В Railway Variables задайте MAILJET_API_KEY, MAILJET_SECRET_KEY и MAIL_FROM.
+MAILJET_API_KEY = os.environ.get("MAILJET_API_KEY", "").strip()
+MAILJET_SECRET_KEY = os.environ.get("MAILJET_SECRET_KEY", "").strip()
+
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "").strip()
-MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER or "MiniGram <onboarding@resend.dev>")
+MAIL_FROM = os.environ.get("MAIL_FROM", SMTP_USER or "MiniGram <onboarding@resend.dev>").strip()
 
 APP_HOST = os.environ.get("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.environ.get("APP_PORT", "5000"))
 FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
+
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "").strip().lstrip("@")
+TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "").strip()

@@ -77,12 +77,30 @@ async function openProfileSettings() {
   closeMenu();
   setModalMessage('profile-settings-msg', '');
   document.getElementById('profile-settings-modal').classList.remove('hidden');
+  document.getElementById('telegram-link-box').classList.add('hidden');
+  document.getElementById('telegram-link-box').textContent = '';
   try {
     const settings = await api('/me/settings');
     document.getElementById('profile-display-name').value = settings.display_name || window.ME.display_name || '';
     document.getElementById('profile-pm-privacy').value = settings.pm_privacy || 'everyone';
+    renderTelegramSettings(settings.telegram || { linked: false, notifications_mode: 'offline' });
   } catch (error) {
     setModalMessage('profile-settings-msg', error.message);
+  }
+}
+
+function renderTelegramSettings(telegram) {
+  const status = document.getElementById('telegram-status');
+  const mode = document.getElementById('telegram-notifications-mode');
+  mode.value = telegram.notifications_mode || 'offline';
+
+  if (telegram.linked) {
+    const username = telegram.telegram_username ? `@${telegram.telegram_username}` : 'подключён';
+    status.textContent = `Подключён: ${username}`;
+    status.classList.add('ok');
+  } else {
+    status.textContent = 'Не подключён';
+    status.classList.remove('ok');
   }
 }
 
@@ -109,6 +127,57 @@ async function saveProfileSettings() {
     }
     setModalMessage('profile-settings-msg', 'Настройки сохранены', true);
     await loadSidebar();
+  } catch (error) {
+    setModalMessage('profile-settings-msg', error.message);
+  }
+}
+
+async function createTelegramLink() {
+  const box = document.getElementById('telegram-link-box');
+  try {
+    const result = await api('/me/telegram/link-token', { method: 'POST' });
+    box.classList.remove('hidden');
+    if (result.deep_link) {
+      box.innerHTML = '';
+      const link = document.createElement('a');
+      link.href = result.deep_link;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = result.deep_link;
+      box.appendChild(link);
+    } else {
+      box.textContent = `Откройте бота и отправьте: /start ${result.token}`;
+    }
+    setModalMessage('profile-settings-msg', 'Ссылка действует 15 минут', true);
+  } catch (error) {
+    setModalMessage('profile-settings-msg', error.message);
+  }
+}
+
+async function saveTelegramSettings() {
+  const notificationsMode = document.getElementById('telegram-notifications-mode').value;
+  try {
+    const result = await api('/me/telegram', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notifications_mode: notificationsMode }),
+    });
+    renderTelegramSettings(result.telegram);
+    setModalMessage('profile-settings-msg', 'Настройки Telegram сохранены', true);
+  } catch (error) {
+    setModalMessage('profile-settings-msg', error.message);
+  }
+}
+
+async function unlinkTelegram() {
+  const ok = confirm('Отключить Telegram от MiniGram?');
+  if (!ok) return;
+  try {
+    const result = await api('/me/telegram', { method: 'DELETE' });
+    renderTelegramSettings(result.telegram);
+    document.getElementById('telegram-link-box').classList.add('hidden');
+    document.getElementById('telegram-link-box').textContent = '';
+    setModalMessage('profile-settings-msg', 'Telegram отключён', true);
   } catch (error) {
     setModalMessage('profile-settings-msg', error.message);
   }
