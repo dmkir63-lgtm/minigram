@@ -86,6 +86,7 @@ def init_db():
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 pm_privacy TEXT NOT NULL DEFAULT 'everyone',
+                email_notifications_mode TEXT NOT NULL DEFAULT 'disabled',
                 created_at TEXT NOT NULL
             );
 
@@ -194,6 +195,12 @@ def init_db():
         add_column_if_missing(
             conn, "users", "pm_privacy", "pm_privacy TEXT NOT NULL DEFAULT 'everyone'"
         )
+        add_column_if_missing(
+            conn,
+            "users",
+            "email_notifications_mode",
+            "email_notifications_mode TEXT NOT NULL DEFAULT 'disabled'",
+        )
         add_column_if_missing(conn, "email_codes", "display_name", "display_name TEXT")
         add_column_if_missing(conn, "channels", "username", "username TEXT")
         add_column_if_missing(
@@ -223,6 +230,9 @@ def init_db():
         )
         conn.execute(
             "UPDATE users SET pm_privacy='everyone' WHERE pm_privacy IS NULL OR pm_privacy NOT IN ('everyone', 'friends')"
+        )
+        conn.execute(
+            "UPDATE users SET email_notifications_mode='disabled' WHERE email_notifications_mode IS NULL OR email_notifications_mode NOT IN ('disabled', 'offline', 'all')"
         )
         conn.execute(
             "UPDATE messages SET delivery_status='sent' WHERE delivery_status IS NULL OR delivery_status NOT IN ('sent', 'delivered', 'read')"
@@ -296,7 +306,7 @@ def get_user(user_id):
     with get_db() as conn:
         return conn.execute(
             """SELECT id, username, COALESCE(display_name, username) AS display_name,
-                      email, pm_privacy, created_at
+                      email, pm_privacy, email_notifications_mode, created_at
                FROM users WHERE id=?""",
             (user_id,),
         ).fetchone()
@@ -588,6 +598,35 @@ def notify_telegram_private_message(receiver_id, sender_id, payload, receiver_on
         "или используйте /to username текст."
     )
     send_telegram_message(telegram_chat_id, text)
+
+
+def notify_email_private_message(receiver_id, sender_id, payload, receiver_online):
+    with get_db() as conn:
+        receiver = conn.execute(
+            """SELECT email, email_notifications_mode
+               FROM users WHERE id=?""",
+            (receiver_id,),
+        ).fetchone()
+        if not receiver or receiver["email_notifications_mode"] == "disabled":
+            return
+        if receiver["email_notifications_mode"] == "offline" and receiver_online:
+            return
+        receiver_email = receiver["email"]
+
+        sender = conn.execute(
+            """SELECT username, COALESCE(display_name, username) AS display_name
+               FROM users WHERE id=?""",
+            (sender_id,),
+        ).fetchone()
+
+    sender_name = sender["display_name"] if sender else payload["username"]
+    subject = f"MiniGram: новое сообщение от {sender_name}"
+    body = (
+        f"Новое сообщение от {sender_name} (@{payload['username']}):\n\n"
+        f"{payload['text']}\n\n"
+        "Ответить можно в MiniGram."
+    )
+    send_email(receiver_email, subject, body)
 
 
 def channel_payload(conn, channel_id, user_id):

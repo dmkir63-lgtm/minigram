@@ -28,6 +28,7 @@ users
 | `email` | `TEXT UNIQUE NOT NULL` | email |
 | `password_hash` | `TEXT NOT NULL` | хеш пароля |
 | `pm_privacy` | `TEXT NOT NULL DEFAULT 'everyone'` | кто может писать |
+| `email_notifications_mode` | `TEXT NOT NULL DEFAULT 'disabled'` | пересылка личных сообщений на email |
 | `created_at` | `TEXT NOT NULL` | дата создания |
 
 ---

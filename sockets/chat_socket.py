@@ -94,6 +94,7 @@ def socket_send_private_message(data):
 
     emit_private_message(payload)
     notify_telegram_private_message(other_id, uid, payload, receiver_online)
+    notify_email_private_message(other_id, uid, payload, receiver_online)
 
 
 @socketio.on("send_channel_message")

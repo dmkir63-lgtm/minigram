@@ -178,6 +178,7 @@ def send_private_from_telegram(chat_id, link, receiver, text):
 
     emit_private_message(payload)
     notify_telegram_private_message(receiver_id, sender_id, payload, receiver_online)
+    notify_email_private_message(receiver_id, sender_id, payload, receiver_online)
     send_telegram_message(chat_id, f"Отправлено @{receiver['username']}.")
 
 

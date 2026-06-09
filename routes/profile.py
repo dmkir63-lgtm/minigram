@@ -24,6 +24,7 @@ def me_settings():
             "display_name": user["display_name"],
             "email": user["email"],
             "pm_privacy": user["pm_privacy"],
+            "email_notifications_mode": user["email_notifications_mode"],
             "telegram": (
                 {
                     "linked": True,
@@ -48,6 +49,7 @@ def update_me_settings():
     data = request.get_json(silent=True) or {}
     display_name = data.get("display_name", "").strip()
     pm_privacy = data.get("pm_privacy")
+    email_notifications_mode = data.get("email_notifications_mode", "disabled")
 
     if not display_name:
         return jsonify({"error": "Введите ник"}), 400
@@ -55,12 +57,21 @@ def update_me_settings():
         return jsonify({"error": "Ник максимум 40 символов"}), 400
     if pm_privacy not in ("everyone", "friends"):
         return jsonify({"error": "Неизвестный режим личных сообщений"}), 400
+    if email_notifications_mode not in ("disabled", "offline", "all"):
+        return jsonify({"error": "Неизвестный режим email-пересылки"}), 400
 
     with get_db() as conn:
         conn.execute(
-            "UPDATE users SET display_name=?, pm_privacy=? WHERE id=?",
-            (display_name, pm_privacy, session["user_id"]),
+            "UPDATE users SET display_name=?, pm_privacy=?, email_notifications_mode=? WHERE id=?",
+            (display_name, pm_privacy, email_notifications_mode, session["user_id"]),
         )
 
     session["display_name"] = display_name
-    return jsonify({"ok": True, "display_name": display_name, "pm_privacy": pm_privacy})
+    return jsonify(
+        {
+            "ok": True,
+            "display_name": display_name,
+            "pm_privacy": pm_privacy,
+            "email_notifications_mode": email_notifications_mode,
+        }
+    )

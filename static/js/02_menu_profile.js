@@ -83,6 +83,7 @@ async function openProfileSettings() {
     const settings = await api('/me/settings');
     document.getElementById('profile-display-name').value = settings.display_name || window.ME.display_name || '';
     document.getElementById('profile-pm-privacy').value = settings.pm_privacy || 'everyone';
+    document.getElementById('profile-email-notifications-mode').value = settings.email_notifications_mode || 'disabled';
     renderTelegramSettings(settings.telegram || { linked: false, notifications_mode: 'offline' });
   } catch (error) {
     setModalMessage('profile-settings-msg', error.message);
@@ -107,6 +108,7 @@ function renderTelegramSettings(telegram) {
 async function saveProfileSettings() {
   const displayName = document.getElementById('profile-display-name').value.trim();
   const pmPrivacy = document.getElementById('profile-pm-privacy').value;
+  const emailNotificationsMode = document.getElementById('profile-email-notifications-mode').value;
 
   if (!displayName) {
     setModalMessage('profile-settings-msg', 'Введите ник');
@@ -117,7 +119,11 @@ async function saveProfileSettings() {
     const result = await api('/me/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ display_name: displayName, pm_privacy: pmPrivacy }),
+      body: JSON.stringify({
+        display_name: displayName,
+        pm_privacy: pmPrivacy,
+        email_notifications_mode: emailNotificationsMode,
+      }),
     });
     window.ME.display_name = result.display_name;
     document.querySelectorAll('.menu-username').forEach(el => { el.textContent = result.display_name; });
