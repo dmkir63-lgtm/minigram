@@ -15,7 +15,7 @@ from core import init_db
 from extensions import app, socketio
 
 # Import modules for route/socket registration.
-from routes import auth, channels, errors, friends, messages, pages, profile, search, telegram  # noqa: F401
+from routes import api, auth, channels, errors, friends, messages, pages, profile, search, telegram  # noqa: F401
 from sockets import chat_socket  # noqa: F401
 
 init_db()

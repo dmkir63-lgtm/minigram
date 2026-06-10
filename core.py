@@ -189,6 +189,15 @@ def init_db():
                 created_at TEXT NOT NULL,
                 expires_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS api_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT,
+                token_hash TEXT UNIQUE NOT NULL,
+                created_at TEXT NOT NULL,
+                last_used_at TEXT
+            );
         """)
 
         add_column_if_missing(conn, "users", "display_name", "display_name TEXT")
@@ -272,6 +281,8 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_telegram_links_chat ON telegram_links(telegram_chat_id);
             CREATE INDEX IF NOT EXISTS idx_telegram_tokens_token ON telegram_link_tokens(token);
             CREATE INDEX IF NOT EXISTS idx_telegram_tokens_user ON telegram_link_tokens(user_id);
+            CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash);
+            CREATE INDEX IF NOT EXISTS idx_api_tokens_user ON api_tokens(user_id);
         """)
         seed_fake_data(conn)
 

@@ -115,3 +115,36 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 ```
 
 В MiniGram откройте настройки профиля, нажмите "Подключить Telegram" и перейдите по ссылке. В боте можно писать `/to username текст`; если сообщение пришло из MiniGram, можно ответить обычным текстом.
+
+## HTTP API
+
+Внешние программы могут работать с MiniGram через `/api/v1`. Сначала получите токен:
+
+```bash
+curl -X POST http://localhost:5000/api/v1/tokens \
+  -H "Content-Type: application/json" \
+  -d '{"login":"alice","password":"123456","name":"local script"}'
+```
+
+Дальше передавайте его в заголовке:
+
+```bash
+Authorization: Bearer mg_...
+```
+
+Основные методы:
+
+```text
+GET    /api/v1/me
+GET    /api/v1/users?q=ali
+GET    /api/v1/users/<user_id>
+GET    /api/v1/private/chats
+GET    /api/v1/private/messages/<user_id>?limit=80
+POST   /api/v1/private/messages              {"receiver_id": 2, "text": "Привет"}
+GET    /api/v1/channels
+GET    /api/v1/channels/<channel_id>/messages?limit=80
+POST   /api/v1/channels/<channel_id>/messages {"text": "Новость"}
+DELETE /api/v1/tokens/current
+```
+
+Токен показывается только один раз при создании. В базе хранится только SHA-256 хеш.

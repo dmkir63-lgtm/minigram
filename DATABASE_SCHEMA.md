@@ -13,7 +13,8 @@ users
 ├─ channel_join_requests: channel_id → channels.id, user_id/responded_by → users.id
 ├─ messages: sender_id/receiver_id → users.id, channel_id → channels.id
 ├─ telegram_links: user_id → users.id
-└─ telegram_link_tokens: user_id → users.id
+├─ telegram_link_tokens: user_id → users.id
+└─ api_tokens: user_id → users.id
 ```
 
 ## Таблицы
@@ -196,6 +197,19 @@ UNIQUE(channel_id, user_id)
 | `created_at` | `TEXT NOT NULL` | дата создания |
 | `expires_at` | `TEXT NOT NULL` | срок действия |
 
+---
+
+### `api_tokens`
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | ID токена |
+| `user_id` | `INTEGER NOT NULL` | владелец токена |
+| `name` | `TEXT` | имя токена для клиента |
+| `token_hash` | `TEXT UNIQUE NOT NULL` | SHA-256 хеш токена |
+| `created_at` | `TEXT NOT NULL` | дата создания |
+| `last_used_at` | `TEXT` | дата последнего использования |
+
 ## Индексы
 
 ```sql
@@ -214,4 +228,6 @@ idx_channel_join_requests_user_status
 idx_telegram_links_chat
 idx_telegram_tokens_token
 idx_telegram_tokens_user
+idx_api_tokens_hash
+idx_api_tokens_user
 ```
