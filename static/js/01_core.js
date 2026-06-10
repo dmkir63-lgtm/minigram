@@ -2,6 +2,8 @@ let activeChat = null;
 let searchTimer = null;
 let socket = null;
 let adminSearchTimer = null;
+let emojiPickerOpen = false;
+const chatEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 let collapsedSections = JSON.parse(localStorage.getItem('minigram_collapsed_sections') || '{"private":false,"channels":false}');
 
 const dom = {};
@@ -26,6 +28,8 @@ function initDom() {
   dom.messages = document.getElementById('messages');
   dom.msgInput = document.getElementById('msg-input');
   dom.sendBtn = document.getElementById('send-btn');
+  dom.emojiBtn = document.getElementById('emoji-btn');
+  dom.emojiPicker = document.getElementById('emoji-picker');
   dom.toast = document.getElementById('toast');
   dom.reqBadge = document.getElementById('req-badge');
 }

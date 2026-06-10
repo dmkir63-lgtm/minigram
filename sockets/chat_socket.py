@@ -91,6 +91,7 @@ def socket_send_private_message(data):
             text,
             receiver_online,
         )
+        payload["reactions"] = []
 
     emit_private_message(payload)
     notify_telegram_private_message(other_id, uid, payload, receiver_online)
@@ -124,7 +125,7 @@ def socket_send_channel_message(data):
             return
 
         created_at = now_str()
-        conn.execute(
+        cur = conn.execute(
             """INSERT INTO messages (chat_type, channel_id, sender_id, username, text, created_at)
                VALUES (?,?,?,?,?,?)""",
             ("channel", channel_id, uid, session["username"], text, created_at),
@@ -133,6 +134,7 @@ def socket_send_channel_message(data):
     emit(
         "new_channel_message",
         {
+            "id": cur.lastrowid,
             "chat_type": "channel",
             "channel_id": channel_id,
             "sender_id": uid,
@@ -140,9 +142,58 @@ def socket_send_channel_message(data):
             "display_name": session.get("display_name", session["username"]),
             "text": text,
             "created_at": created_at,
+            "reactions": [],
         },
         to=f"channel_{channel_id}",
     )
+
+
+@socketio.on("toggle_reaction")
+def socket_toggle_reaction(data):
+    if "user_id" not in session:
+        return
+
+    try:
+        message_id = int(data.get("message_id", 0))
+    except (TypeError, ValueError):
+        message_id = 0
+    emoji = str(data.get("emoji", "")).strip()
+    if not message_id or emoji not in ("👍", "❤️", "😂", "😮", "😢", "🔥"):
+        return
+
+    uid = session["user_id"]
+    with get_db() as conn:
+        message, _role, reason = message_access(conn, message_id, uid)
+        if reason:
+            emit("app_error", {"error": reason})
+            return
+
+        existing = conn.execute(
+            "SELECT id FROM message_reactions WHERE message_id=? AND user_id=? AND emoji=?",
+            (message_id, uid, emoji),
+        ).fetchone()
+        if existing:
+            conn.execute("DELETE FROM message_reactions WHERE id=?", (existing["id"],))
+            reacted = False
+        else:
+            conn.execute(
+                """INSERT INTO message_reactions (message_id, user_id, emoji, created_at)
+                   VALUES (?,?,?,?)""",
+                (message_id, uid, emoji, now_str()),
+            )
+            reacted = True
+        reactions = message_reactions(conn, [message_id], uid).get(message_id, [])
+        targets = message_emit_targets(message)
+
+    payload = {
+        "message_id": message_id,
+        "user_id": uid,
+        "emoji": emoji,
+        "reacted": reacted,
+        "reactions": reactions,
+    }
+    for target in targets:
+        socketio.emit("message_reactions_updated", payload, to=target)
 
 
 init_db()

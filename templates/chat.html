@@ -55,6 +55,10 @@
         <div class="typing-row" id="typing-row"></div>
 
         <div class="input-row">
+          <div class="emoji-wrap">
+            <button class="emoji-btn" id="emoji-btn" type="button" onclick="toggleEmojiPicker()" aria-label="Эмодзи">☺</button>
+            <div class="emoji-picker hidden" id="emoji-picker"></div>
+          </div>
           <input id="msg-input" type="text" placeholder="Сообщение…" autocomplete="off">
           <button class="send-btn" id="send-btn" type="button" onclick="sendMessage()" aria-label="Отправить">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

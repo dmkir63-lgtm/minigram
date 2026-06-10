@@ -29,8 +29,9 @@ def channel_messages(channel_id):
                LIMIT 80""",
             (channel_id,),
         ).fetchall()
+        payload = attach_message_reactions(conn, reversed(messages), uid)
 
-    return jsonify([dict(row) for row in reversed(messages)])
+    return jsonify(payload)
 
 
 @app.route("/private/messages/<int:other_id>")
@@ -56,8 +57,45 @@ def private_messages(other_id):
                LIMIT 80""",
             (uid, other_id, other_id, uid),
         ).fetchall()
+        payload = attach_message_reactions(conn, reversed(messages), uid)
 
-    return jsonify([dict(row) for row in reversed(messages)])
+    return jsonify(payload)
+
+
+@app.route("/messages/<int:message_id>", methods=["DELETE"])
+@limiter.limit("60 per minute")
+def delete_message(message_id):
+    err = require_login_json()
+    if err:
+        return err
+
+    uid = session["user_id"]
+    with get_db() as conn:
+        message, role, reason = message_access(conn, message_id, uid)
+        if reason:
+            status = 404 if "найдено" in reason else 403
+            return jsonify({"error": reason}), status
+
+        can_delete = message["sender_id"] == uid
+        if message["chat_type"] == "channel" and role in ("owner", "admin"):
+            can_delete = True
+        if not can_delete:
+            return jsonify({"error": "Удалить можно только своё сообщение"}), 403
+
+        targets = message_emit_targets(message)
+        conn.execute("DELETE FROM message_reactions WHERE message_id=?", (message_id,))
+        conn.execute("DELETE FROM messages WHERE id=?", (message_id,))
+
+    payload = {
+        "message_id": message_id,
+        "chat_type": message["chat_type"],
+        "channel_id": message["channel_id"],
+        "sender_id": message["sender_id"],
+        "receiver_id": message["receiver_id"],
+    }
+    for target in targets:
+        socketio.emit("message_deleted", payload, to=target)
+    return jsonify({"ok": True})
 
 
 @app.route("/private/chats/<int:other_id>", methods=["DELETE"])

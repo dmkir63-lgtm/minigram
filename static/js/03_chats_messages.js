@@ -82,6 +82,7 @@ function showChat() {
 
 function closeChat() {
   activeChat = null;
+  closeEmojiPicker();
   dom.chatView.classList.add('hidden');
   dom.noChat.classList.remove('hidden');
   document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
@@ -216,6 +217,35 @@ function renderMessages(messages) {
   dom.messages.scrollTop = dom.messages.scrollHeight;
 }
 
+function renderReactionButtons(message) {
+  const reactions = message.reactions || [];
+  if (!message.id || !reactions.length) return '';
+
+  const chips = reactions.map(reaction => `
+    <button class="reaction-chip ${reaction.reacted_by_me ? 'active' : ''}" data-emoji="${esc(reaction.emoji)}" type="button" onclick="toggleReaction(${message.id}, '${esc(reaction.emoji)}')">
+      <span>${esc(reaction.emoji)}</span>
+      <span>${reaction.count}</span>
+    </button>
+  `).join('');
+
+  return `
+    <div class="bubble-reactions" data-reactions-for="${message.id}">
+      ${chips}
+    </div>
+  `;
+}
+
+function renderMessageActions(message, isOwn) {
+  if (!message.id) return '';
+  const canDelete = isOwn || (activeChat?.type === 'channel' && ['owner', 'admin'].includes(activeChat.role));
+  return `
+    <div class="bubble-actions">
+      <button class="bubble-action" type="button" onclick="openReactionMenu(${message.id})" title="Реакция">☺</button>
+      ${canDelete ? `<button class="bubble-action danger" type="button" onclick="deleteMessage(${message.id})" title="Удалить сообщение">🗑</button>` : ''}
+    </div>
+  `;
+}
+
 function appendMessage(message) {
   const placeholder = dom.messages.querySelector('.list-empty');
   if (placeholder) placeholder.remove();
@@ -229,6 +259,7 @@ function appendMessage(message) {
   if (message.id) row.dataset.messageId = message.id;
   row.innerHTML = `
     <div class="bubble">
+      ${renderMessageActions(message, isOwn)}
       <div class="bubble-meta">
         ${!isOwn ? `<span class="bubble-author">${esc(authorName)}</span>` : ''}
         ${!isOwn && message.username ? `<span class="bubble-tag">@${esc(message.username)}</span>` : ''}
@@ -236,10 +267,106 @@ function appendMessage(message) {
         ${isOwn && isPrivate ? `<span class="bubble-status ${status === 'read' ? 'read' : ''}" title="${statusTitle(status)}">${statusIcon(status)}</span>` : ''}
       </div>
       <div class="bubble-text">${linkifyText(message.text)}</div>
+      ${renderReactionButtons(message)}
     </div>
   `;
   dom.messages.appendChild(row);
   dom.messages.scrollTop = dom.messages.scrollHeight;
+}
+
+function updateMessageReactions(messageId, reactions, actorUserId, actorEmoji, actorReacted) {
+  const row = dom.messages.querySelector(`.msg-row[data-message-id="${messageId}"]`);
+  if (!row) return;
+  const activeByEmoji = {};
+  row.querySelectorAll('.reaction-chip').forEach(chip => {
+    activeByEmoji[chip.dataset.emoji] = chip.classList.contains('active');
+  });
+  const normalized = (reactions || []).map(reaction => ({
+    ...reaction,
+    reacted_by_me: Number(actorUserId) === Number(window.ME.id)
+      ? (reaction.emoji === actorEmoji ? Boolean(actorReacted) : Boolean(reaction.reacted_by_me))
+      : Boolean(activeByEmoji[reaction.emoji]),
+  }));
+  const container = row.querySelector('.bubble-reactions');
+  const html = renderReactionButtons({ id: messageId, reactions: normalized });
+  if (container) {
+    if (html.trim()) container.outerHTML = html;
+    else container.remove();
+    return;
+  }
+  if (html.trim()) {
+    row.querySelector('.bubble').insertAdjacentHTML('beforeend', html);
+  }
+}
+
+function removeMessage(messageId) {
+  const row = dom.messages.querySelector(`.msg-row[data-message-id="${messageId}"]`);
+  if (!row) return;
+  row.remove();
+  if (!dom.messages.querySelector('.msg-row')) {
+    dom.messages.innerHTML = emptyList('Пока нет сообщений');
+  }
+}
+
+function openReactionMenu(messageId) {
+  const row = dom.messages.querySelector(`.msg-row[data-message-id="${messageId}"]`);
+  if (!row) return;
+  const existing = row.querySelector('.reaction-menu');
+  document.querySelectorAll('.reaction-menu').forEach(menu => menu.remove());
+  if (existing) return;
+
+  const menu = document.createElement('div');
+  menu.className = 'reaction-menu';
+  menu.innerHTML = chatEmojis.map(emoji => `
+    <button type="button" onclick="toggleReaction(${messageId}, '${emoji}')">${emoji}</button>
+  `).join('');
+  row.querySelector('.bubble').appendChild(menu);
+}
+
+function toggleReaction(messageId, emoji) {
+  if (!socket || !socket.connected) {
+    showToast('Нет подключения');
+    return;
+  }
+  socket.emit('toggle_reaction', { message_id: messageId, emoji });
+  document.querySelectorAll('.reaction-menu').forEach(menu => menu.remove());
+}
+
+async function deleteMessage(messageId) {
+  try {
+    await api(`/messages/${messageId}`, { method: 'DELETE' });
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function fillEmojiPicker() {
+  if (!dom.emojiPicker || dom.emojiPicker.dataset.ready) return;
+  dom.emojiPicker.innerHTML = chatEmojis.map(emoji => `
+    <button type="button" onclick="insertEmoji('${emoji}')">${emoji}</button>
+  `).join('');
+  dom.emojiPicker.dataset.ready = '1';
+}
+
+function toggleEmojiPicker() {
+  fillEmojiPicker();
+  emojiPickerOpen = !emojiPickerOpen;
+  dom.emojiPicker.classList.toggle('hidden', !emojiPickerOpen);
+}
+
+function closeEmojiPicker() {
+  emojiPickerOpen = false;
+  if (dom.emojiPicker) dom.emojiPicker.classList.add('hidden');
+}
+
+function insertEmoji(emoji) {
+  if (dom.msgInput.disabled) return;
+  const start = dom.msgInput.selectionStart ?? dom.msgInput.value.length;
+  const end = dom.msgInput.selectionEnd ?? dom.msgInput.value.length;
+  dom.msgInput.value = dom.msgInput.value.slice(0, start) + emoji + dom.msgInput.value.slice(end);
+  const nextPos = start + emoji.length;
+  dom.msgInput.focus();
+  dom.msgInput.setSelectionRange(nextPos, nextPos);
 }
 
 function updateMessageStatuses(ids, status) {

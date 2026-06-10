@@ -170,6 +170,15 @@ def init_db():
                 created_at TEXT NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS message_reactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                emoji TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                UNIQUE(message_id, user_id, emoji)
+            );
+
             CREATE TABLE IF NOT EXISTS telegram_links (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER UNIQUE NOT NULL,
@@ -271,6 +280,8 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_messages_private_receiver ON messages(chat_type, receiver_id, sender_id, id);
             CREATE INDEX IF NOT EXISTS idx_messages_channel ON messages(chat_type, channel_id, id);
             CREATE INDEX IF NOT EXISTS idx_messages_delivery ON messages(chat_type, receiver_id, delivery_status);
+            CREATE INDEX IF NOT EXISTS idx_message_reactions_message ON message_reactions(message_id);
+            CREATE INDEX IF NOT EXISTS idx_message_reactions_user ON message_reactions(user_id);
             CREATE INDEX IF NOT EXISTS idx_friend_to ON friend_requests(to_id, status);
             CREATE INDEX IF NOT EXISTS idx_user_blocks_blocker ON user_blocks(blocker_id, blocked_id);
             CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks(blocked_id, blocker_id);
@@ -547,6 +558,72 @@ def insert_private_message(conn, sender_id, receiver_id, username, display_name,
 def emit_private_message(payload):
     socketio.emit("new_private_message", payload, to=f'user_{payload["sender_id"]}')
     socketio.emit("new_private_message", payload, to=f'user_{payload["receiver_id"]}')
+
+
+def message_reactions(conn, message_ids, user_id):
+    if not message_ids:
+        return {}
+
+    placeholders = ",".join("?" for _ in message_ids)
+    rows = conn.execute(
+        f"""SELECT message_id, emoji, COUNT(*) AS count,
+                   MAX(CASE WHEN user_id=? THEN 1 ELSE 0 END) AS reacted_by_me
+            FROM message_reactions
+            WHERE message_id IN ({placeholders})
+            GROUP BY message_id, emoji
+            ORDER BY message_id, emoji""",
+        (user_id, *message_ids),
+    ).fetchall()
+
+    result = {message_id: [] for message_id in message_ids}
+    for row in rows:
+        result[row["message_id"]].append(
+            {
+                "emoji": row["emoji"],
+                "count": row["count"],
+                "reacted_by_me": bool(row["reacted_by_me"]),
+            }
+        )
+    return result
+
+
+def attach_message_reactions(conn, rows, user_id):
+    items = [dict(row) for row in rows]
+    reactions_by_message = message_reactions(
+        conn,
+        [item["id"] for item in items if item.get("id")],
+        user_id,
+    )
+    for item in items:
+        item["reactions"] = reactions_by_message.get(item.get("id"), [])
+    return items
+
+
+def message_access(conn, message_id, user_id):
+    row = conn.execute("SELECT * FROM messages WHERE id=?", (message_id,)).fetchone()
+    if not row:
+        return None, None, "Сообщение не найдено"
+
+    if row["chat_type"] == "private":
+        if user_id not in (row["sender_id"], row["receiver_id"]):
+            return row, None, "Нет доступа к сообщению"
+        return row, "participant", None
+
+    if row["chat_type"] == "channel":
+        role = get_channel_role(conn, row["channel_id"], user_id)
+        if role is None:
+            return row, None, "Нет доступа к каналу"
+        return row, role, None
+
+    return row, None, "Неизвестный тип чата"
+
+
+def message_emit_targets(message):
+    if message["chat_type"] == "private":
+        return [f'user_{message["sender_id"]}', f'user_{message["receiver_id"]}']
+    if message["chat_type"] == "channel":
+        return [f'channel_{message["channel_id"]}']
+    return []
 
 
 def telegram_api(method, payload):

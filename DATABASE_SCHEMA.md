@@ -12,6 +12,7 @@ users
 ├─ channel_members: channel_id → channels.id, user_id → users.id
 ├─ channel_join_requests: channel_id → channels.id, user_id/responded_by → users.id
 ├─ messages: sender_id/receiver_id → users.id, channel_id → channels.id
+├─ message_reactions: message_id → messages.id, user_id → users.id
 ├─ telegram_links: user_id → users.id
 ├─ telegram_link_tokens: user_id → users.id
 └─ api_tokens: user_id → users.id
@@ -171,6 +172,24 @@ UNIQUE(channel_id, user_id)
 
 ---
 
+### `message_reactions`
+
+| Поле | Тип | Назначение |
+|---|---|---|
+| `id` | `INTEGER PRIMARY KEY AUTOINCREMENT` | ID реакции |
+| `message_id` | `INTEGER NOT NULL` | сообщение |
+| `user_id` | `INTEGER NOT NULL` | кто поставил реакцию |
+| `emoji` | `TEXT NOT NULL` | эмодзи реакции |
+| `created_at` | `TEXT NOT NULL` | дата создания |
+
+Ограничение:
+
+```sql
+UNIQUE(message_id, user_id, emoji)
+```
+
+---
+
 ### `telegram_links`
 
 | Поле | Тип | Назначение |
@@ -218,6 +237,8 @@ idx_messages_private
 idx_messages_private_receiver
 idx_messages_channel
 idx_messages_delivery
+idx_message_reactions_message
+idx_message_reactions_user
 idx_friend_to
 idx_user_blocks_blocker
 idx_user_blocks_blocked

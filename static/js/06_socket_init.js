@@ -57,6 +57,15 @@ function setupSocket() {
     loadSidebar().catch(() => { });
   });
 
+  socket.on('message_reactions_updated', data => {
+    updateMessageReactions(data.message_id, data.reactions || [], data.user_id, data.emoji, data.reacted);
+  });
+
+  socket.on('message_deleted', data => {
+    removeMessage(data.message_id);
+    loadSidebar().catch(() => { });
+  });
+
   socket.on('new_channel_message', message => {
     if (activeChat && activeChat.type === 'channel' && activeChat.id === message.channel_id) {
       appendMessage(message);
@@ -105,6 +114,17 @@ function setupEvents() {
     if (event.key === 'Escape') {
       document.querySelectorAll('.modal-overlay').forEach(modal => modal.classList.add('hidden'));
       dom.searchDropdown.classList.add('hidden');
+      closeEmojiPicker();
+      document.querySelectorAll('.reaction-menu').forEach(menu => menu.remove());
+    }
+  });
+
+  document.addEventListener('click', event => {
+    if (dom.emojiPicker && dom.emojiBtn && !dom.emojiPicker.contains(event.target) && !dom.emojiBtn.contains(event.target)) {
+      closeEmojiPicker();
+    }
+    if (!event.target.closest('.bubble-action') && !event.target.closest('.reaction-menu')) {
+      document.querySelectorAll('.reaction-menu').forEach(menu => menu.remove());
     }
   });
 }
